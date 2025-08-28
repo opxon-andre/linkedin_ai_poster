@@ -4,6 +4,16 @@ It is a simplyfied python script for those who have to post content often to Lin
 
 
 Setup:
+General Part
+1. clone this repository to a place you like
+2. rename the files 
+   /config/config.ini.TEMPLATE ->  /config/config.ini
+   /config/prompts.SAMPLE  -> /config/prompts
+3. The parameters in config.ini are described below, so be patient!
+4. Make yourself familiar how to prompt content for your target group. The Sammple is really not useful for anybody! You can try prompting with the chatgpt chatbot, and as soon you are happy with the result, take that prompt in the prompts file. 
+5. Same with the prompt for image generation. Don´t overcomplicate it! Choose style you like and keep the prompt short. Otherwise you´ll get always similar output.
+6. Install the python requirements: pip install -r requirements.txt 
+
 
 LinkedIn Part
 1. First you need to have Company Page at LinkedIn. Even you do not run a company, you cannot use the LI API without that page.
@@ -39,3 +49,21 @@ You can use claude AI if you like. But the results are not that nice as they are
 Follow the instructions how to get an API Key for Claude, and fill it in the config.ini. If you do not want to use claude (which is the default), keep the parameter "claude_token", but with an empty value.
 
    
+#######################################
+
+How to use
+To generate new content without posting it ensure the config parameter dry_run is set to True. Then simply call "python ./main.py" within the app directory. this will create a new suggestion as a html file in the directory content/new. A related image will be saved in content/images.
+
+To post that fresh content, call "python ./main.py post_existing" and follow the instructions.
+
+With setting the dry_run parameter to false, you enter the semi auto mode. The content will be created and posted in one turn by calling "python ./main.py".
+
+
+
+#####################################
+
+Open Topics
+- A Dockerized Version will follow soon
+- The Scheduler will follow after the Docker Version. That will post content within a (already) configurable timeframe.
+
+

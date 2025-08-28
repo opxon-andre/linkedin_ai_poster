@@ -1,21 +1,33 @@
 [API]
+# Follow any how to to get an API Token for openAI/chatgpt. You need to have an account with some money on that. otherwise it will fail!
+# you can choose other models than gpt-4o-mini. But this small one does a good job and is cheap and fast. But don´t hesitate to try others.
 openai_token = sk-proj-*****
 openai_model = gpt-4o-mini
 
+
+# Anthropics Claude is another possibility for Text generation (not image generation!). 
 claude_token = sk-ant-api03-********
 claude_model = claude-sonnet-4-20250514
 
+# choose between openai and claude
+text_ai = openai
+
+# as of now, only chatgpt is implemented. Other will follow
+image_ai = openai
+
+# follow the instructions in the readme or any others how to obtain an API Token. 
+# The API token is NOT YOUR USERNAME!
 linkedin_token = ****
 
 # post as company or person
 post_as = company  
 
-
+# Not implemeted so far. 
 [SCHEDULER]
 post_start = 08
 post_end = 23
 timezone = Europe/Berlin
 
-
+# If True, the generated content is saved locally only. You can call the function with the parameter "post_existing" to post generated content later on
 [OPTIONS]
 dry_run = True   ; true = nur HTML speichern, false = direkt auf LinkedIn posten

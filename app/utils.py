@@ -2,6 +2,7 @@ import configparser
 import requests
 import datetime
 import base64
+import os
 
 from pathlib import Path
 from openai import OpenAI
@@ -17,6 +18,9 @@ openai_model = config["API"]["openai_model"]
 claude_api_key = config["API"]["claude_token"]
 claude_model = config["API"]["claude_model"]
 
+text_ai = config["API"]["text_ai"]
+image_ai = config["API"]["image_ai"]
+
 linkedin_token = config["API"]["linkedin_token"]
 #company_page_id = config["API"]["company_page_id"]
 #person_id = config["API"]["person_id"]
@@ -26,12 +30,19 @@ start_hour = int(config["SCHEDULER"]["post_start"])
 end_hour = int(config["SCHEDULER"]["post_end"])
 
 
+dry_run = config["OPTIONS"]["dry_run"]
+post_as = config["API"]["post_as"]
+
+
 # --- Prompts laden ---
 prompts = configparser.ConfigParser()
 prompts.read("../config/prompts")
 
 text_prompt = prompts["PROMPTS"]["text_prompt"]
 image_prompt = prompts["PROMPTS"]["image_prompt"]
+
+
+
 
 
 output_dir = Path("../content/new")
@@ -43,6 +54,30 @@ used_dir.mkdir(exist_ok=True)
 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 openai_client = OpenAI(api_key=openai_token)
+
+
+
+def get_dry_run():
+    if dry_run is False:
+        return False
+    else:
+        print("Dry Run enabled. Saving posts locally only. Not automated posting.")
+        return True
+    
+
+def get_author():
+    return post_as
+
+
+
+def generate_text():
+    if (text_ai == "claude"):
+        text = generate_text_with_claude()
+    else:
+        text = generate_text_with_chatgpt
+
+    return text
+
 
 
 # --- Claude Textgenerierung ---
@@ -138,8 +173,10 @@ def save_post_as_html(text, image_url):
 
 
 
-def move_to_used(file):
+def move_to_used(src):
     # move from new to used in ../content
+    print(f"Used File: ", src)
+    #os.rename(src, dest)
     return True
 
 
