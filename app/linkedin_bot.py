@@ -14,16 +14,16 @@ config = configparser.ConfigParser()
 config.read("../config/config.ini")
 
 openai_token = config["API"]["openai_token"]
-#openai_client = OpenAI(api_key=config["API"]["openai_token"])
-claude_api_key = config["API"]["claude_token"]
-linkedin_token = config["API"]["linkedin_token"]
-company_urn = config["API"]["linkedin_company_urn"]
-company_page_id = config["API"]["company_page_id"]
-person_id = config["API"]["person_id"]
-
-
-claude_model = config["API"]["claude_model"]
 openai_model = config["API"]["openai_model"]
+
+claude_api_key = config["API"]["claude_token"]
+claude_model = config["API"]["claude_model"]
+
+linkedin_token = config["API"]["linkedin_token"]
+#company_page_id = config["API"]["company_page_id"]
+#person_id = config["API"]["person_id"]
+post_as = config["API"]["post_as"]
+
 
 start_hour = int(config["SCHEDULER"]["post_start"])
 end_hour = int(config["SCHEDULER"]["post_end"])
@@ -45,15 +45,21 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 
-def post_to_linkedin(text, image, origin):
+def post_to_linkedin(text, image, origin=None):
     ## origin: personal post or company post -> Seeting the author
     ## company post is the default
-    
-    author = f"urn:li:organization:{company_page_id}"
+
+    if origin is None:
+        origin = post_as
+
     if origin == "company":
+        curn = get_company_urn()
+        company_page_id = curn.rsplit(":", 1)[-1]
         author = f"urn:li:organization:{company_page_id}"
     
     if origin == "personal": 
+        purn = get_person_urn()
+        person_id = purn.rsplit(":", 1)[-1]
         author = f"urn:li:person:{person_id}"
 
     print(f"Poste als ", author)
@@ -147,8 +153,9 @@ def personal_post_to_linkedin(text, asset_urn, author):
     r = requests.post(url=api_url, headers=headers, json=payload)
     print("LinkedIn Response:", r.status_code, r.text)
     if r.status_code <= 300:
-        data = r.text.json
-        id = data.get[id]
+        ids = r.text
+        idt = ids.get("id")
+        id = idt.split(":")[-1]
         print(f"Link zum neuen Post: \nhttps://www.linkedin.com/feed/update/{id}")
 
 
@@ -169,11 +176,13 @@ def post_existing_html(file_path):
     img_end = html_content.find('"', img_start)
     img_url = html_content[img_start:img_end]
 
-    origin = "company" ## set as default
     author_start = html_content.find('<meta origin="') + 10
     author_end = html_content.find('"', author_start)
     origin = html_content[author_start:author_end]
+    if (origin != "company" and origin != "person"):
+        origin = post_as
 
+    print("Origin: ",origin)
     post_to_linkedin(text, img_url, origin)
 
     utils.move_to_used(file_path)

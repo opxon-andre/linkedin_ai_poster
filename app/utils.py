@@ -12,16 +12,15 @@ config = configparser.ConfigParser()
 config.read("../config/config.ini")
 
 openai_token = config["API"]["openai_token"]
-#openai_client = OpenAI(api_key=config["API"]["openai_token"])
-claude_api_key = config["API"]["claude_token"]
-linkedin_token = config["API"]["linkedin_token"]
-company_urn = config["API"]["linkedin_company_urn"]
-company_page_id = config["API"]["company_page_id"]
-person_id = config["API"]["person_id"]
-
-
-claude_model = config["API"]["claude_model"]
 openai_model = config["API"]["openai_model"]
+
+claude_api_key = config["API"]["claude_token"]
+claude_model = config["API"]["claude_model"]
+
+linkedin_token = config["API"]["linkedin_token"]
+#company_page_id = config["API"]["company_page_id"]
+#person_id = config["API"]["person_id"]
+
 
 start_hour = int(config["SCHEDULER"]["post_start"])
 end_hour = int(config["SCHEDULER"]["post_end"])
@@ -98,7 +97,7 @@ def check_text_with_chatgpt(text):
 
 
 def generate_image(text):
-    imagefile = output_dir / f"post_{timestamp}.png"
+    imagefile = f"../images/post_{timestamp}.png"
     print(f"Erstelle passendes Bild: {imagefile}")
     response = openai_client.responses.create(
         model="gpt-4.1-mini",

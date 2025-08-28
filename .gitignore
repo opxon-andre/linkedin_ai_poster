@@ -1,0 +1,6 @@
+config/MY_config.ini
+/BAK
+/content
+app/__pycache__
+config/config.ini
+config/prompts

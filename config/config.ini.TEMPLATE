@@ -1,0 +1,21 @@
+[API]
+openai_token = sk-proj-*****
+openai_model = gpt-4o-mini
+
+claude_token = sk-ant-api03-********
+claude_model = claude-sonnet-4-20250514
+
+linkedin_token = ****
+
+# post as company or person
+post_as = company  
+
+
+[SCHEDULER]
+post_start = 08
+post_end = 23
+timezone = Europe/Berlin
+
+
+[OPTIONS]
+dry_run = True   ; true = nur HTML speichern, false = direkt auf LinkedIn posten
