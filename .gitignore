@@ -4,3 +4,4 @@ config/MY_config.ini
 app/__pycache__
 config/config.ini
 config/prompts
+config/textprompts

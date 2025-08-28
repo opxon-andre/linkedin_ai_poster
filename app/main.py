@@ -1,4 +1,6 @@
 import os
+import datetime
+import time
 import linkedin_bot as bot
 import utils
 
@@ -7,10 +9,15 @@ import utils
 
 # --- Hauptablauf Content generation---
 def create_and_save_post(dry_run=True):
-    
+    text = ""
     #text = generate_text_with_claude(text_prompt)
     #check = check_text_with_chatgpt(text)
     text = utils.generate_text()
+    if not text:
+        print("Text generation failed - aborting!")
+        exit()
+    else:
+        print("Text generation successful!\n")
     check = "OK"
     if check != "OK":
         print("Text nicht geeignet, hole Korrektur von Claude...")
@@ -34,5 +41,13 @@ if __name__ == "__main__":
         idx = int(input("Wähle den Index des zu postenden HTML-Posts: "))
         resp = bot.post_existing_html(posts[idx])
         print("Post wurde auf LinkedIn veröffentlicht:", resp)
+        exit()
+    if len(sys.argv) > 1 and sys.argv[1] == "generate":
+        print("Content creation only. No posting to LinkedIn")
+        create_and_save_post(dry_run=True)
+        exit()
     else:
-        create_and_save_post(utils.get_dry_run())  
+        dry = utils.get_dry_run()
+        create_and_save_post(dry_run=dry)
+ 
+            

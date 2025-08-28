@@ -3,6 +3,10 @@ import requests
 import datetime
 import base64
 import os
+import random
+import time
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from pathlib import Path
 from openai import OpenAI
@@ -26,9 +30,9 @@ linkedin_token = config["API"]["linkedin_token"]
 #person_id = config["API"]["person_id"]
 
 
-start_hour = int(config["SCHEDULER"]["post_start"])
-end_hour = int(config["SCHEDULER"]["post_end"])
-
+post_start = config["SCHEDULER"]["post_start"]
+post_end = config["SCHEDULER"]["post_end"]
+timezone = ZoneInfo(config["SCHEDULER"]["timezone"])
 
 dry_run = config["OPTIONS"]["dry_run"]
 post_as = config["API"]["post_as"]
@@ -41,8 +45,7 @@ prompts.read("../config/prompts")
 text_prompt = prompts["PROMPTS"]["text_prompt"]
 image_prompt = prompts["PROMPTS"]["image_prompt"]
 
-
-
+text_prompt_file = config["PROMPTS"]["text_file"]
 
 
 output_dir = Path("../content/new")
@@ -61,7 +64,7 @@ def get_dry_run():
     if dry_run is False:
         return False
     else:
-        print("Dry Run enabled. Saving posts locally only. Not automated posting.")
+        print("Dry Run enabled. Saving posts locally only. No automated posting.")
         return True
     
 
@@ -70,11 +73,37 @@ def get_author():
 
 
 
+def random_text_prompt():
+    if not text_prompt_file:
+        return text_prompt
+    else:
+        with open(f"../config/{text_prompt_file}", "r", encoding="utf-8") as f:
+            rline = None
+            for i, line in enumerate(f, 1):
+                if random.randrange(i) == 0:  # Wahrscheinlichkeit 1/i
+                    rline = line.strip()
+    return rline
+
+
+
+
+def scheduler():
+    now = datetime.now(timezone).strftime("%H:%M")
+    while not (post_start <= now <= post_end):
+        print(f"⚠️ Nicht im Post-Zeitfenster (Start: {post_start} - End: {post_end} - now: {now}).")
+        time.sleep(1*3)
+    else:
+        return True
+    
+
+
+
 def generate_text():
+    print("AI in use for text: ", text_ai)
     if (text_ai == "claude"):
         text = generate_text_with_claude()
     else:
-        text = generate_text_with_chatgpt
+        text = generate_text_with_chatgpt()
 
     return text
 
@@ -103,6 +132,8 @@ def generate_text_with_claude():
 
 def generate_text_with_chatgpt():
     print("Erzeuge Text mit ChatGPT...")
+    text_prompt = random_text_prompt()
+    print("Prompt für Text: ", text_prompt)
     response = openai_client.chat.completions.create(
         model="gpt-5",  # aktuelles ChatGPT-Modell
         messages=[
@@ -132,12 +163,12 @@ def check_text_with_chatgpt(text):
 
 
 def generate_image(text):
-    imagefile = f"../images/post_{timestamp}.png"
-    print(f"Erstelle passendes Bild: {imagefile}")
+    imagefile = f"../content/images/post_{timestamp}.png"
+    print(f"Create related Image: {imagefile}")
     response = openai_client.responses.create(
-        model="gpt-4.1-mini",
+        model=openai_model,
         #size="1024x1024",
-        input = f"{image_prompt}\n\nBezug zum Text: {text}", #   "Generate an image of gray tabby cat hugging an otter with an orange scarf",
+        input = f"{image_prompt}\n\nBezug zum Text: {text}", 
         tools=[{"type": "image_generation"}],
     )
 
