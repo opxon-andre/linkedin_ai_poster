@@ -54,7 +54,7 @@ output_dir.mkdir(exist_ok=True)
 used_dir = Path("../content/used")
 used_dir.mkdir(exist_ok=True)
 
-timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 openai_client = OpenAI(api_key=openai_token)
 

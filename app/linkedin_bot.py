@@ -5,7 +5,7 @@ from pathlib import Path
 
 import requests
 import datetime
-
+import json
 import utils
 
 
@@ -153,9 +153,9 @@ def personal_post_to_linkedin(text, asset_urn, author):
     r = requests.post(url=api_url, headers=headers, json=payload)
     print("LinkedIn Response:", r.status_code, r.text)
     if r.status_code <= 300:
-        ids = r.text
-        idt = ids.get("id")
-        id = idt.split(":")[-1]
+        data = json.loads(r.text)
+        urn = data["id"]
+        id = urn.split(":")[-1]
         print(f"Link zum neuen Post: \nhttps://www.linkedin.com/feed/update/{id}")
 
 
@@ -186,7 +186,7 @@ def post_existing_html(file_path):
     post_to_linkedin(text, img_url, origin)
 
     utils.move_to_used(file_path)
-    utils.move_to_used(img_url)
+    #utils.move_to_used(img_url)
 
     return True
 

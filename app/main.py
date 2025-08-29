@@ -3,7 +3,7 @@ import datetime
 import time
 import linkedin_bot as bot
 import utils
-
+from pathlib import Path
 
 
 
@@ -24,7 +24,8 @@ def create_and_save_post(dry_run=True):
         text = utils.generate_text_with_claude(f"Korrigiere diesen Text für LinkedIn: {text}")
     image_url = utils.generate_image(text)
     html_file = utils.save_post_as_html(text, image_url)
-    print(f"Post als HTML gespeichert: {html_file}")
+    fqdp = Path(html_file)
+    print(f"Post als HTML gespeichert: {fqdp}")
     if not dry_run:
         resp = bot.post_to_linkedin(text, image_url, utils.get_author())
         print(f"Direkt auf LinkedIn gepostet: {resp}")
