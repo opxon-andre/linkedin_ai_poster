@@ -6,12 +6,18 @@ from pathlib import Path
 import requests
 import datetime
 import json
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
+
+
 import utils
 
 
 # --- Konfiguration laden ---
+CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
 config = configparser.ConfigParser()
-config.read("../config/config.ini")
+config.read(CONFIG_FILE)
 
 openai_token = config["API"]["openai_token"]
 openai_model = config["API"]["openai_model"]
@@ -31,7 +37,7 @@ end_hour = int(config["SCHEDULER"]["post_end"])
 
 # --- Prompts laden ---
 prompts = configparser.ConfigParser()
-prompts.read("../config/prompts")
+prompts.read(f"{os.getcwd()}/config/prompts")
 
 text_prompt = prompts["PROMPTS"]["text_prompt"]
 image_prompt = prompts["PROMPTS"]["image_prompt"]
@@ -156,7 +162,7 @@ def personal_post_to_linkedin(text, asset_urn, author):
         data = json.loads(r.text)
         urn = data["id"]
         id = urn.split(":")[-1]
-        print(f"Link zum neuen Post: \nhttps://www.linkedin.com/feed/update/{id}")
+        print(f"Link zum neuen Post: \nhttps://www.linkedin.com/feed/update/urn:li:activity:{id}")
 
 
 

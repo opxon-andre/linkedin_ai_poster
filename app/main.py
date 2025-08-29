@@ -1,6 +1,10 @@
 import os
 import datetime
 import time
+import sys
+
+sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
+
 import linkedin_bot as bot
 import utils
 from pathlib import Path
@@ -28,7 +32,7 @@ def create_and_save_post(dry_run=True):
     print(f"Post als HTML gespeichert: {fqdp}")
     if not dry_run:
         resp = bot.post_to_linkedin(text, image_url, utils.get_author())
-        print(f"Direkt auf LinkedIn gepostet: {resp}")
+        #print(f"Direkt auf LinkedIn gepostet: {resp}")
 
 
 
@@ -47,7 +51,13 @@ if __name__ == "__main__":
         print("Content creation only. No posting to LinkedIn")
         create_and_save_post(dry_run=True)
         exit()
+    if len(sys.argv) > 1 and sys.argv[1] == "automode":
+        print("Select the first post from the existing list, post it, and prepare a new post in the stack.")
+        posts = utils.list_existing_posts()
+        bot.post_existing_html(posts[0])
+        create_and_save_post(dry_run=True)
     else:
+        #print("Docker works!")
         dry = utils.get_dry_run()
         create_and_save_post(dry_run=dry)
  
