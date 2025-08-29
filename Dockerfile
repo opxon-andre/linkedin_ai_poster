@@ -34,9 +34,9 @@ COPY requirements.txt ./
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+#COPY . .
 
-#RUN git clone https://github.com/opxon-andre/linkedin_ai_poster.git /app
+RUN git clone https://github.com/opxon-andre/linkedin_ai_poster.git /app
 
 ### possible entrypoints:
     ## generate -> only generates new content
