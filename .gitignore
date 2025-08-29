@@ -5,3 +5,4 @@ app/__pycache__
 config/config.ini
 config/prompts
 config/textprompts
+.vscode/launch.json

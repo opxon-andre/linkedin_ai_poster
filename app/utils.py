@@ -13,8 +13,9 @@ from openai import OpenAI
 
 
 # --- Konfiguration laden ---
+CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
 config = configparser.ConfigParser()
-config.read("../config/config.ini")
+config.read(CONFIG_FILE)
 
 openai_token = config["API"]["openai_token"]
 openai_model = config["API"]["openai_model"]
@@ -40,7 +41,7 @@ post_as = config["API"]["post_as"]
 
 # --- Prompts laden ---
 prompts = configparser.ConfigParser()
-prompts.read("../config/prompts")
+prompts.read(f"{os.getcwd()}/config/prompts")
 
 text_prompt = prompts["PROMPTS"]["text_prompt"]
 image_prompt = prompts["PROMPTS"]["image_prompt"]
@@ -48,10 +49,10 @@ image_prompt = prompts["PROMPTS"]["image_prompt"]
 text_prompt_file = config["PROMPTS"]["text_file"]
 
 
-output_dir = Path("../content/new")
+output_dir = Path(f"{os.getcwd()}/content/new")
 output_dir.mkdir(exist_ok=True)
 
-used_dir = Path("../content/used")
+used_dir = Path(f"{os.getcwd()}/content/used")
 used_dir.mkdir(exist_ok=True)
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -77,7 +78,7 @@ def random_text_prompt():
     if not text_prompt_file:
         return text_prompt
     else:
-        with open(f"../config/{text_prompt_file}", "r", encoding="utf-8") as f:
+        with open(f"{os.getcwd()}/config/{text_prompt_file}", "r", encoding="utf-8") as f:
             rline = None
             for i, line in enumerate(f, 1):
                 if random.randrange(i) == 0:  # Wahrscheinlichkeit 1/i
@@ -163,7 +164,7 @@ def check_text_with_chatgpt(text):
 
 
 def generate_image(text):
-    imagefile = f"../content/images/post_{timestamp}.png"
+    imagefile = f"{os.getcwd()}/content/images/post_{timestamp}.png"
     print(f"Create related Image: {imagefile}")
     response = openai_client.responses.create(
         model=openai_model,
