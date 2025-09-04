@@ -9,24 +9,18 @@ openai_model = gpt-4o-mini
 claude_token = sk-ant-api03-********
 claude_model = claude-sonnet-4-20250514
 
+
 # choose between openai and claude
 text_ai = openai
+
 
 # as of now, only chatgpt is implemented. Other will follow
 image_ai = openai
 
+
 # follow the instructions in the readme or any others how to obtain an API Token. 
 # The API token is NOT YOUR USERNAME!
 linkedin_token = ****
-
-# post as company or person
-post_as = company  
-
-# A file with one prompt in each line. The Program decide random which to choose
-# This is optional to the single prompt file. In best case, define your favorite prompt in the single file, and fill up the text_file with everything you learn over time.
-# The configured file need to exist in the config directory.
-[PROMPTS]
-text_file = textprompts
 
 
 
@@ -36,6 +30,33 @@ post_start = 08
 post_end = 23
 timezone = Europe/Berlin
 
-# If True, the generated content is saved locally only. You can call the function with the parameter "post_existing" to post generated content later on
+
+
+[PROMPTS]
+# A file with one prompt in each line. The Program decide random which to choose
+# This is optional to the single prompt file. In best case, define your favorite prompt in the single file, and fill up the text_file with everything you learn over time.
+# The configured file need to exist in the config directory. (/config/<text_file)
+text_file = textprompts
+system_prompt = "Du bist ein erfahrener Marketing- und LinkedIn-Texter."
+check_prompt = "Prüfe, ob der Text für LinkedIn geeignet ist. Antworte nur mit 'OK' oder 'NICHT OK'."
+
+
+
 [OPTIONS]
-dry_run = True   ; true = nur HTML speichern, false = direkt auf LinkedIn posten
+dry_run = True   ; # If True, the generated content is saved locally only. You can call the function with the parameter "post_existing" to post generated content later on
+demo = false    ; no text or image generation. Fixed Info only to save computing time
+
+
+
+[TEMPLATES]
+#; post as company or person (default value)
+post_as = company       
+company_name = opXon GmbH
+tagline = IT-Service-Management Consulting
+logo_url=https://media.licdn.com/dms/image/v2/D4E0BAQFItEUyPgxpAQ/company-logo_100_100/company-logo_100_100/0/1730797026509?e=1759968000&v=beta&t=CFhnhW0YAvXmRjxKGtBTe5XsFWSnvMAzK3mFevmu_hA
+
+# alt Text for images
+alt_image = opXon GmbH - ITSM Experts
+
+#;Template for linkedIn postings. File only, no path!
+linkedin = linkedin.tpl.html

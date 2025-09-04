@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Schedule Post</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .form-row { margin-bottom: 12px; }
+    label { display: block; font-weight: bold; margin-bottom: 4px; }
+    .schedule-list { margin-top: 20px; }
+    .schedule-item { margin-bottom: 8px; }
+    .schedule-item form { display: inline; }
+  </style>
+</head>
+<body>
+  <h2>Schedule a Post</h2>
+  <form method="post" action="/save_schedule">
+    {% if filename %}
+      <input type="hidden" name="filename" value="{{ filename }}">
+      <p><strong>Post:</strong> {{ filename }}</p>
+    {% else %}
+      <div class="form-row">
+        <label for="filename">Choose Post:</label>
+        <select name="filename" id="filename">
+          {% for f in all_files %}
+            <option value="{{ f }}">{{ f }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endif %}
+
+    <div class="form-row">
+      <label for="datetime">Date & Time:</label>
+      <input type="datetime-local" name="datetime" id="datetime" required>
+    </div>
+
+    <div class="form-row">
+      <label for="repeat">Repeat (CRON format, optional):</label>
+      <input type="text" name="repeat" id="repeat" placeholder="e.g. 0 9 * * 1">
+    </div>
+
+    <button type="submit">Save Schedule</button>
+  </form>
+
+  {% if schedules %}
+    <div class="schedule-list">
+      <h3>Existing Schedules</h3>
+      {% for s in schedules %}
+        <div class="schedule-item">
+          ⏰ {{ s.datetime_fmt }} 
+          {% if s.repeat %}(Repeat: {{ s.repeat }}){% endif %}
+          <form method="post" action="/delete_schedule" style="display:inline;">
+            <input type="hidden" name="filename" value="{{ filename }}">
+            <input type="hidden" name="datetime" value="{{ s.datetime }}">
+            <button type="submit">Delete</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</body>
+</html>

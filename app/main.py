@@ -1,5 +1,6 @@
 import os
 import datetime
+import argparse
 import time
 import sys
 
@@ -22,10 +23,7 @@ def create_and_save_post(dry_run=True):
         exit()
     else:
         print("Text generation successful!\n")
-    check = "OK"
-    if check != "OK":
-        print("Text nicht geeignet, hole Korrektur von Claude...")
-        text = utils.generate_text_with_claude(f"Korrigiere diesen Text für LinkedIn: {text}")
+        
     image_url = utils.generate_image(text)
     html_file = utils.save_post_as_html(text, image_url)
     fqdp = Path(html_file)
@@ -37,28 +35,45 @@ def create_and_save_post(dry_run=True):
 
 
 
+def main(command=None):
+    if command is None:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("command")
+        #parser.add_argument("arg1", nargs="?")
+        #parser.add_argument("arg2", nargs="?")
+        args = parser.parse_args()
+        command = args.command
+
+    match command:
+        case "post_existing":
+            posts = utils.list_existing_posts()
+            idx = int(input("Wähle den Index des zu postenden HTML-Posts: "))
+            resp = bot.post_existing_html(posts[idx])
+            print("Post wurde auf LinkedIn veröffentlicht:", resp)
+        
+        case "generate":
+            # pick a random one of the prompts from config/textprompts and generate content about that
+            print("Content creation only. No posting to LinkedIn")
+            create_and_save_post(dry_run=True)
+            
+        case "automode":
+            print("Select the first post from the existing list, post it, and prepare a new post in the stack.")
+            posts = utils.list_existing_posts()
+            bot.post_existing_html(posts[0])
+            create_and_save_post(dry_run=True)
+            
+        case _:
+            dry = utils.get_dry_run()
+            create_and_save_post(dry_run=dry)
+
+
+
 
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "post_existing":
-        posts = utils.list_existing_posts()
-        idx = int(input("Wähle den Index des zu postenden HTML-Posts: "))
-        resp = bot.post_existing_html(posts[idx])
-        print("Post wurde auf LinkedIn veröffentlicht:", resp)
-        exit()
-    if len(sys.argv) > 1 and sys.argv[1] == "generate":
-        print("Content creation only. No posting to LinkedIn")
-        create_and_save_post(dry_run=True)
-        exit()
-    if len(sys.argv) > 1 and sys.argv[1] == "automode":
-        print("Select the first post from the existing list, post it, and prepare a new post in the stack.")
-        posts = utils.list_existing_posts()
-        bot.post_existing_html(posts[0])
-        create_and_save_post(dry_run=True)
-    else:
-        #print("Docker works!")
-        dry = utils.get_dry_run()
-        create_and_save_post(dry_run=dry)
- 
+    start_time = time.time()
+    main()
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Execution time: {execution_time:.2f} seconds")
             

@@ -5,8 +5,11 @@ import base64
 import os
 import random
 import time
+import random
+
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from bs4 import BeautifulSoup
 
 from pathlib import Path
 from openai import OpenAI
@@ -36,7 +39,7 @@ post_end = config["SCHEDULER"]["post_end"]
 timezone = ZoneInfo(config["SCHEDULER"]["timezone"])
 
 dry_run = config["OPTIONS"]["dry_run"]
-post_as = config["API"]["post_as"]
+post_as = config["TEMPLATES"]["post_as"]
 
 
 # --- Prompts laden ---
@@ -47,6 +50,9 @@ text_prompt = prompts["PROMPTS"]["text_prompt"]
 image_prompt = prompts["PROMPTS"]["image_prompt"]
 
 text_prompt_file = config["PROMPTS"]["text_file"]
+promptpath = Path(f"{os.getcwd()}/config/{text_prompt_file}")
+
+linkedin_tpl = config["TEMPLATES"]["linkedin"]
 
 
 output_dir = Path(f"{os.getcwd()}/content/new")
@@ -71,6 +77,7 @@ def get_dry_run():
 
 def get_author():
     return post_as
+
 
 
 
@@ -99,19 +106,26 @@ def scheduler():
 
 
 
-def generate_text():
+def generate_text(prompt=None):
     print("AI in use for text: ", text_ai)
-    if (text_ai == "claude"):
-        text = generate_text_with_claude()
+
+    if prompt:
+        text_prompt = prompt
     else:
-        text = generate_text_with_chatgpt()
+        print("select random prompt to generate Text")
+        text_prompt = random_text_prompt()
+    
+    if (text_ai == "claude"):
+        text = generate_text_with_claude(text_prompt)
+    else:
+        text = generate_text_with_chatgpt(text_prompt)
 
     return text
 
 
 
 # --- Claude Textgenerierung ---
-def generate_text_with_claude():
+def generate_text_with_claude(text_prompt):
     print("Erzeuge Text mit Claude AI...")
 
     url = "https://api.anthropic.com/v1/messages"
@@ -131,14 +145,18 @@ def generate_text_with_claude():
 
 
 
-def generate_text_with_chatgpt():
-    print("Erzeuge Text mit ChatGPT...")
-    text_prompt = random_text_prompt()
+def generate_text_with_chatgpt(text_prompt):
+    if config["OPTIONS"]["demo"]:
+        print("Demo-Mode is ON")
+        return "This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this"
+
+    print("Generate content with ChatGPT...")
+
     print("Prompt für Text: ", text_prompt)
     response = openai_client.chat.completions.create(
         model="gpt-5",  # aktuelles ChatGPT-Modell
         messages=[
-            {"role": "system", "content": "Du bist ein erfahrener Marketing- und LinkedIn-Texter."},
+            {"role": "system", "content": config["PROMPTS"]["system_prompt"]},
             {"role": "user", "content": text_prompt}
         ],
         #max_tokens=500,
@@ -155,7 +173,7 @@ def check_text_with_chatgpt(text):
     resp = openai_client.chat.completions.create(
         model=openai_model,
         messages=[
-            {"role": "system", "content": "Prüfe, ob der Text für LinkedIn geeignet ist. Antworte nur mit 'OK' oder 'NICHT OK'."},
+            {"role": "system", "content": config["PROMPTS"]["check_prompt"]},
             {"role": "user", "content": text}
         ]
     )
@@ -164,6 +182,11 @@ def check_text_with_chatgpt(text):
 
 
 def generate_image(text):
+    if config["OPTIONS"]["demo"]:
+        print("Demo-Mode is ON")
+        return "https://picsum.photos/200/300"
+
+
     imagefile = f"{os.getcwd()}/content/images/post_{timestamp}.png"
     print(f"Create related Image: {imagefile}")
     response = openai_client.responses.create(
@@ -184,25 +207,33 @@ def generate_image(text):
         image_base64 = image_data[0]
         with open(imagefile, "wb") as f:
             f.write(base64.b64decode(image_base64))
-    
+    print("Image generated.")
     return imagefile
 
 
 
 # --- HTML-Post speichern ---
-def save_post_as_html(text, image_url):
-    #timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_path = output_dir / f"post_{timestamp}.html"
-    html = f"""<html>
-<head><meta charset="UTF-8"><title>LinkedIn Post</title></head>
-<body>
-<h2>LinkedIn Post Vorschau</h2>
-<p>{text}</p>
-<img src="{image_url}" alt="Generated Image" style="max-width:500px;">
-</body></html>"""
-    file_path.write_text(html, encoding="utf-8")
-    return file_path
+def save_post_as_html(text, image_url):   
+    file_path=Path(f"{os.getcwd()}/content/new/post_{timestamp}.html")
+    company = config["TEMPLATES"]["company_name"]
+    tagln = config["TEMPLATES"]["tagline"]
 
+
+    render_linkedin_preview(
+        template_path=Path(f"{os.getcwd()}/content/templates/{linkedin_tpl}"),
+        out_path=file_path,
+        company_name=company,
+        logo_url="https://media.licdn.com/dms/image/v2/D4E0BAQFItEUyPgxpAQ/company-logo_100_100/company-logo_100_100/0/1730797026509?e=1759968000&v=beta&t=CFhnhW0YAvXmRjxKGtBTe5XsFWSnvMAzK3mFevmu_hA",
+        tagline=tagln,
+        text=text,
+        image_url=image_url,
+        hashtags="",
+        reactions=random.randint(20,500), comments=random.randint(1,50), shares=random.randint(0,10),
+        confirmed="False", 
+        origin=post_as
+    )
+
+    return file_path
 
 
 def move_to_used(src):
@@ -217,3 +248,140 @@ def list_existing_posts():
     for i, f in enumerate(files):
         print(f"[{i}] {f.name}")
     return files
+
+
+
+
+
+def render_linkedin_preview(template_path: str, out_path: str, *,
+                            company_name: str, logo_url: str, tagline: str,
+                            text: str, image_url: str, hashtags: str = "",
+                            reactions, comments, shares, confirmed, origin,
+                            timestamp=None):
+    """Füllt das LinkedIn-Template mit Inhalten und speichert es als HTML."""
+    html = Path(template_path).read_text(encoding="utf-8")
+    timestamp = timestamp or datetime.now().strftime("%d.%m.%Y %H:%M")
+
+    title, body = split_post_text(text)
+
+    replacements = {
+        "{{TITLE}}": title,
+        "{{COMPANY_NAME}}": company_name,
+        "{{COMPANY_LOGO_URL}}": logo_url or "",
+        "{{COMPANY_TAGLINE}}": tagline or "Unternehmensbeitrag",
+        "{{TIMESTAMP}}": timestamp,
+        "{{POST_TEXT}}": text,
+        "{{POST_IMAGE_URL}}": image_url or "",
+        "{{POST_HASHTAGS}}": hashtags or "",
+        "{{REACTIONS_COUNT}}": str(reactions),
+        "{{COMMENTS_COUNT}}": str(comments),
+        "{{SHARES_COUNT}}": str(shares),
+        "{{CONFIRMED}}": confirmed or "False",
+        "{{ORIGIN}}": origin or "company",
+    }
+
+    for placeholder, value in replacements.items():
+        html = html.replace(placeholder, value)
+
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(out_path).write_text(html, encoding="utf-8")
+    return out_path
+
+
+
+
+def extract_post_elements(html_path: str) -> dict:
+    """Liest die Post-Elemente aus einer gespeicherten HTML-Vorschau zurück."""
+    soup = BeautifulSoup(Path(html_path).read_text(encoding="utf-8"), "html.parser")
+
+    return {
+        "company_name": soup.select_one(".company-name").get_text(strip=True),
+        "logo_url": soup.select_one(".company-logo")["src"],
+        "tagline": soup.select_one(".company-tagline").get_text(strip=True),
+        "timestamp": soup.select_one(".timestamp").get_text(strip=True),
+        "text": soup.select_one(".post-text").get_text("\n", strip=True),
+        "image_url": soup.select_one(".post-image")["src"] if soup.select_one(".post-image") else "",
+        "hashtags": soup.select_one(".hashtags").get_text(" ", strip=True),
+        "reactions": int(soup.select_one(".reactions").get_text(strip=True).split()[0]),
+        "comments": int(soup.select_one(".comments").get_text(strip=True).split()[0]),
+        "shares": int(soup.select_one(".shares").get_text(strip=True).split()[0]),
+        "confirmed": int(soup.select_one(".confirmed").get_text(strip=True).split()[0]),
+    }
+
+
+
+
+def split_post_text(full_text: str):
+    """Splits the post text into title (first line) and body (rest)."""
+    lines = full_text.strip().split("\n", 1)
+    title = lines[0]
+    body = lines[1] if len(lines) > 1 else ""
+    return title, body
+
+
+
+
+def get_schedules_from_post(filepath):
+    """
+    Liest alle gespeicherten Schedules aus einer HTML-Datei
+    und gibt eine Liste von Dicts zurück.
+    """
+    
+    if not os.path.exists(filepath):
+        return []
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "html.parser")
+
+    schedules = []
+    for span in soup.select("section.posting-meta span.schedule"):
+        dt_raw = span.get("data-datetime")
+        repeat_val = span.get("data-repeat", "")
+
+        dt_fmt = dt_raw
+        try:
+            # Versuchen in lesbares Format umzuwandeln
+            dt_obj = datetime.strptime(dt_raw, "%Y-%m-%dT%H:%M")
+            dt_fmt = dt_obj.strftime("%d.%m.%Y %H:%M")
+        except Exception:
+            pass  # wenn Format nicht passt, Rohwert beibehalten
+
+        schedules.append({
+            "datetime": dt_raw,
+            "datetime_fmt": dt_fmt,
+            "repeat": repeat_val
+        })
+
+    return schedules
+
+
+
+def edit_prompt(old_text: str, new_text: str):
+    """
+    Edit the Prompts in the promptsfile (from config.ini -> PROMPTS -> text_file)
+    Params: existing prompt or empty for a new prompt, new or edited prompt 
+    """
+
+    if not os.path.exists(promptpath):
+        open(promptpath, "w", encoding="utf-8").close()
+
+    with open(promptpath, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f.readlines()]
+
+    if old_text:
+        updated = False
+        for i, line in enumerate(lines):
+            if line == old_text.strip():
+                lines[i] = new_text.strip()
+                updated = True
+                break
+        if not updated:
+            lines.append(new_text.strip())
+    else:
+        lines.append(new_text.strip())
+
+    with open(promptpath, "w", encoding="utf-8") as f:
+        for line in lines:
+            f.write(line + "\n")
+
+    return True

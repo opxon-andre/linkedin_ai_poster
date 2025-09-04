@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Post Übersicht</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .iframe-wrapper {
+      width: 100%;
+      height: 300px;
+      border: none;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .card-controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      background: #fafafa;
+      border-top: 1px solid #ddd;
+    }
+    .btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+    .btn-preview {
+      background: #0073b1;
+      color: white;
+    }
+    .btn-post {
+      background: #fcad04;
+      color: rgb(0, 0, 0);
+    }
+    .btn-schedule {
+      background: #dcceff;
+      color: rgb(0, 0, 0);
+    }
+    .btn-confirmed {
+      background: #f4f4f4;
+      color: black;
+    }
+    .btn-confirmed.active {
+      background: #28a745;
+      color: white;
+    }
+    .btn-origin {
+      background: #8bdaff;
+      color: black;
+    }
+    .btn-origin.active {
+      background: #0635ef;
+      color: white;
+    }
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+    }
+    .posting-history {
+        padding: 10px;
+        font-size: 13px;
+        color: #555;
+    }
+    .posting-history ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .posting-history li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+    .posting-history img {
+        width: 16px;
+        height: 16px;
+    }
+    .schedule {
+        padding: 10px;
+        font-size: 13px;
+        color: #555;
+    }
+    .schedule ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .schedule li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+    .schedule img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .modal {
+      display: none; /* versteckt */
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+  }
+  .modal-content {
+      background: #fff;
+      margin: 5% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 60%;
+      max-width: 700px;
+  }
+  .close {
+      float: right;
+      font-size: 28px;
+      cursor: pointer;
+  }
+  </style>
+</head>
+<body>
+  <h1 style="text-align:center;">Prepared Postings</h1>
+  <div class="grid">
+    {% for post in posts %}
+      <div class="card">
+        <div class="iframe-wrapper">
+          <iframe src="/content/new/{{ post.filename }}"></iframe>
+        </div>
+        <div class="card-controls">
+          <button class="btn btn-preview"
+                  onclick="window.open('/content/new/{{ post.filename }}', '_blank')">
+            Open Preview
+          </button>
+          <button class="btn btn-confirmed {% if post.confirmed == 'Yes' %}active{% endif %}"
+                  data-filename="{{ post.filename }}"
+                  onclick="toggleConfirmed(this)">
+            {% if post.confirmed == "Yes" %}Confirmed{% else %}☐ Confirm{% endif %}
+          </button>
+          <button class="btn btn-delete"
+                  data-filename="{{ post.filename }}"
+                  onclick="deletePost(this)">
+            Delete
+          </button>
+        </div>
+        <div class="card-controls">
+          <button class="btn btn-post"
+                  data-filename="{{ post.filename }}"
+                  onclick="postNow(this)">
+            Post Now
+          </button>
+          <button class="btn btn-schedule"
+                  data-filename="{{ post.filename }}"
+                  >
+            Schedule
+          </button>
+          <button class="btn btn-origin {% if post.origin == 'Company' %}active{% endif %}"
+                  data-filename="{{ post.filename }}"
+                  onclick="changeOrigin(this)">
+                  {% if post.origin == "Company" %}Company{% else %}Personal{% endif %}
+          </button>
+        </div>
+        
+        <div class="posting-history">
+          <ul>
+            <li>History</li>
+            {% for hentry in post.history %}
+              <li>
+                <img src="/content/static/icons/{{ hentry.platform }}.png" alt="{{ hentry.platform }}">
+                {{ hentry.timestamp }}
+              </li>
+            {% endfor %}
+          </ul>
+          <ul>
+            <li>Schedule</li>
+            {% for sentry in post.schedule %}
+            <li>
+              ⏰ {{ sentry.datetime_fmt }}
+            </li>
+          {% endfor %}
+          </ul>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+
+
+  <h1 style="text-align:center;">Generate new Postings</h1>
+  <div class="grid">
+    {% for prompt in prompts %}
+      <div class="card">
+        <div class="prompt_show">
+          <p>{{prompt}}</p>
+        </div>
+        <div class="card-controls">
+          <button class="btn generate"
+              data-prompt="{{ prompt }}"
+              onclick="generateNew(this)">
+            Generate new
+          </button>
+          <button class="btn btn-promptEdit" data-prompt="{{prompt}}">
+            ✏️ Edit
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+
+
+  <div id="scheduleModal" class="modal">
+    <div class="modal-content">
+      <span class="close s_close">&times;</span>
+      <iframe id="scheduleFrame" src="" style="width:90%;height:400px;border:none;"></iframe>
+    </div>
+  </div>
+
+
+  <div id="promptModal" class="modal">
+    <div class="modal-content">
+      <span class="close p_close">&times;</span>
+      <iframe id="promptFrame" src="" style="width:90%;height:400px;border:none;"></iframe>
+    </div>
+  </div>
+
+
+
+  <script>
+    async function postNow(button) {
+      const filename = button.dataset.filename;
+      if (!confirm("Please confirm this post before posting it!")) return;
+
+      const response = await fetch("/post_now", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename })
+      });
+
+    }
+
+
+    async function schedulePost(button) {
+      const filename = button.dataset.filename;
+
+      const response = await fetch("/schedule_this", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename })
+      });
+    }  
+
+
+    async function generateNew(button) {
+      const prompt = button.dataset.prompt;
+
+      const response = await fetch("/generate_new", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
+    }   
+
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const modal = document.getElementById("scheduleModal");
+      const closeBtn = document.querySelector(".close");
+      const frame = document.getElementById("scheduleFrame");
+
+      const pmodal = document.getElementById("promptModal");
+      const pcloseBtn = document.querySelector(".p_close");
+      const pframe = document.getElementById("promptFrame");
+
+      document.querySelectorAll(".btn-schedule").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const filename = this.getAttribute("data-filename");
+          frame.src = "/scheduler?filename=" + encodeURIComponent(filename);
+          modal.style.display = "block";
+        });
+      });
+
+      document.querySelectorAll(".btn-promptEdit").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const data = this.getAttribute("data-prompt");
+          frame.src = "/edit_prompt?prompt=" + encodeURIComponent(data);
+          modal.style.display = "block";
+        });
+      });
+
+      closeBtn.onclick = function() {
+        modal.style.display = "none";
+        frame.src = ""; // reset
+      }
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+          frame.src = "";
+        }
+      }
+    });
+
+
+
+ 
+
+
+
+    async function changeOrigin(button) {
+      const filename = button.dataset.filename;
+      const isActive = button.classList.contains("active");
+      const origin = isActive ? "Personal" : "Company";
+
+      const response = await fetch("/change_origin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename, origin })
+      });
+
+      if (response.ok) {
+        if (origin === "Company") {
+          button.classList.add("active");
+          button.textContent = "Company";
+        } else {
+          button.classList.remove("active");
+          button.textContent = "Personal";
+        }
+      } else {
+        alert("Fehler beim Aktualisieren");
+      }
+    }
+
+    async function toggleConfirmed(button) {
+      const filename = button.dataset.filename;
+      const isActive = button.classList.contains("active");
+      const confirmed = isActive ? "No" : "Yes";
+
+      const response = await fetch("/update_flag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename, confirmed })
+      });
+
+      if (response.ok) {
+        if (confirmed === "Yes") {
+          button.classList.add("active");
+          button.textContent = "Confirmed";
+        } else {
+          button.classList.remove("active");
+          button.textContent = "☐ Confirm";
+        }
+      } else {
+        alert("Fehler beim Aktualisieren");
+      }
+    }
+
+    async function deletePost(button) {
+      const filename = button.dataset.filename;
+      if (!confirm("really delete this post?")) return;
+
+      const response = await fetch("/delete_post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename })
+      });
+
+      if (response.ok) {
+        button.closest(".card").remove();
+      } else {
+        alert("Fehler beim Löschen");
+      }
+    }
+  </script>
+</body>
+</html>

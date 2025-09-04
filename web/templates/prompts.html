@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Prompt</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .modal {
+      display: block; /* direkt sichtbar */
+      position: fixed; z-index: 1000; left: 0; top: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+      background: #fff; margin: 10% auto; padding: 20px; width: 500px;
+      border-radius: 8px; position: relative;
+    }
+    .content textarea {
+      width: 100%; height: 150px; font-size: 14px; white-space: pre-wrap;
+    }
+    .button-bar { margin-top: 15px; text-align: right; }
+    button { padding: 8px 16px; margin-left: 8px; }
+    #status { margin-top: 10px; font-weight: bold; }
+    #status.success { color: green; }
+    #status.error { color: red; }
+  </style>
+</head>
+<body>
+
+    <div class="content">
+      <h3>Edit Prompt</h3>
+      <form id="promptForm" method="post" action="{{ url_for('save_prompt') }}">
+        <input type="hidden" name="old_text" id="old_text" value="{{ old_text|e }}">
+        <textarea name="new_text" id="new_text">{{ old_text|e }}</textarea>
+        <div class="button-bar">
+          <button type="submit">💾 Save</button>
+          <button type="button" onclick="window.history.back()">Cancel</button>
+        </div>
+        <div id="status"></div>
+      </form>
+    </div>
+  
+
+  <script>
+    document.getElementById("promptForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const form = this;
+      fetch(form.action, {
+        method: "POST",
+        body: new FormData(form)
+      })
+      .then(response => response.json())
+      .then(data => {
+        const statusEl = document.getElementById("status");
+        if (data.success) {
+          statusEl.innerText = "✅ Gespeichert!";
+          statusEl.className = "success";
+          document.getElementById("old_text").value = data.new_text;
+          document.getElementById("new_text").value = data.new_text;
+        } else {
+          statusEl.innerText = "❌ Fehler beim Speichern";
+          statusEl.className = "error";
+        }
+
+        // Meldung nach 3 Sekunden ausblenden
+        setTimeout(() => {
+          statusEl.innerText = "";
+          statusEl.className = "";
+        }, 3000);
+      })
+      .catch(() => {
+        const statusEl = document.getElementById("status");
+        statusEl.innerText = "❌ Netzwerkfehler";
+        statusEl.className = "error";
+
+        setTimeout(() => {
+          statusEl.innerText = "";
+          statusEl.className = "";
+        }, 3000);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -4,14 +4,15 @@ import configparser
 from pathlib import Path
 
 import requests
-import datetime
+from datetime import datetime
 import json
 import sys
+from bs4 import BeautifulSoup
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 
 
-import utils
+import app.utils as utils
 
 
 # --- Konfiguration laden ---
@@ -28,7 +29,7 @@ claude_model = config["API"]["claude_model"]
 linkedin_token = config["API"]["linkedin_token"]
 #company_page_id = config["API"]["company_page_id"]
 #person_id = config["API"]["person_id"]
-post_as = config["API"]["post_as"]
+post_as = config["TEMPLATES"]["post_as"]
 
 
 start_hour = int(config["SCHEDULER"]["post_start"])
@@ -45,14 +46,14 @@ image_prompt = prompts["PROMPTS"]["image_prompt"]
 
 
 
-timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
 
 
 
 def post_to_linkedin(text, image, origin=None):
-    ## origin: personal post or company post -> Seeting the author
+    ## origin: personal post or company post -> Setting the author
     ## company post is the default
 
     if origin is None:
@@ -68,7 +69,7 @@ def post_to_linkedin(text, image, origin=None):
         person_id = purn.rsplit(":", 1)[-1]
         author = f"urn:li:person:{person_id}"
 
-    print(f"Poste als ", author)
+    print(f"Post as {origin}", author)
 
     ## prepare image for linkedin
     asset_urn, upload_url = register_image_upload(author)
@@ -77,7 +78,8 @@ def post_to_linkedin(text, image, origin=None):
     print(f"Image {image} upload as asset {asset_urn}")
     upload_image_bytes(upload_url, image)
 
-    personal_post_to_linkedin(text, asset_urn, author)
+    resp, link = post_linkedin_api(text, asset_urn, author)
+    return resp, link
 
 
 
@@ -109,28 +111,47 @@ def register_image_upload(owner):
 
 
 
-def upload_image_bytes(upload_url, image):
-     with open(image, 'rb') as f:
+
+
+def get_image_path(file):
+    path, file = os.path.split(file)
+    file_path = f"{os.getcwd()}/content/images/{file}"
+    print("Imagefile: ", file_path)
+    return file_path
+
+
+
+
+def upload_image_bytes(upload_url, image_path):
+    file_path = get_image_path(image_path)
+
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+        exit()
+
+    with open(file_path, 'rb') as f:
         headers = {
             "Authorization": f"Bearer {linkedin_token}"
         }
         response = requests.put(upload_url, headers=headers, data=f)
 
         # Check the response
-        print(f"Image {image} uploaded to:{upload_url}   - with code: {response.status_code}")
+        print(f"Image {file_path} uploaded to:{upload_url}   - with code: {response.status_code}")
         print(response.text)
 
 
 
+
+
 # --- LinkedIn Posting ---
-def personal_post_to_linkedin(text, asset_urn, author):
+def post_linkedin_api(text, asset_urn, author):
     print("Poste Inhalt auf linkedIn!")
     """Post in LinkedIn hochladen"""
     api_url = "https://api.linkedin.com/v2/ugcPosts"
     headers = {"Authorization": f"Bearer {linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
 
     payload = {
-        #"author": f"urn:li:person:{person_id}",
         "author": f"{author}",
         "lifecycleState": "PUBLISHED",
         "specificContent": {
@@ -141,11 +162,11 @@ def personal_post_to_linkedin(text, asset_urn, author):
                     {
                         "status": "READY",
                         "description": {
-                            "text": "ITSM by opXon GmbH"
+                            "text": config["TEMPLATES"]["alt_image"]
                         },
                         "media": f"{asset_urn}",
                         "title": {
-                            "text": "ITSM by opXon GmbH"
+                            "text": config["TEMPLATES"]["alt_image"]
                         }
                     }
                 ]
@@ -162,8 +183,93 @@ def personal_post_to_linkedin(text, asset_urn, author):
         data = json.loads(r.text)
         urn = data["id"]
         id = urn.split(":")[-1]
-        print(f"Link zum neuen Post: \nhttps://www.linkedin.com/feed/update/urn:li:activity:{id}")
+        company_urn = get_company_urn()
+        #link = f"https://www.linkedin.com/feed/update/urn:li:activity:{id}"
+        link = f"https://www.linkedin.com/company/{company_urn}/admin/dashboard/"
+        print(f"Link zum neuen Post: \n{link}")
+    
+    return r.status_code, link
 
+
+
+
+def web_post_existing_html(file):
+    print(f"Web interaction: posting now file {file}")
+    try:
+        resp, link = post_existing_html(file)
+        return resp, link
+    except Exception as e:
+        print("Error during posting of existing html file: ", e)
+        return False, None
+
+
+
+
+def get_posting_data(file_path):
+    """ 
+    read the file and returns all information as one dict
+    Expects a full qualified path to the file
+    """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+    
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "html.parser")
+
+        content_dict = {}
+
+        # Creation time
+        c_time = ""
+        c_time = soup.select_one(".timestamp").get_text(strip=True)
+        content_dict.update({"c_time":c_time})
+
+        # Confirmed-Flag auslesen
+        confirmed = "No"
+        confirmed_span = soup.find("span", {"class": "confirmed"})
+        confirmed = confirmed_span.text.strip()
+        content_dict.update({"confirmed":confirmed})
+
+        # origin auslesen -> wird zu author
+        origin = config["TEMPLATES"]["post_as"]
+        origin_span = soup.find("span", {"class": "origin"})
+        origin = origin_span.text.strip()
+        content_dict.update({"origin":origin})
+
+        # Text lesen
+        text = ""
+        text_span = soup.find("div", {"class": "post-text"})
+        text = text_span.text.strip()
+        content_dict.update({"text":text})
+
+        # image finden
+        image = ""
+        img_span = soup.find("img", {"class": "post-image"})
+        image = img_span.get("src")
+        content_dict.update({"image":image})
+
+        # hashtags lesen
+        hashtags = ""
+        hash_span = soup.find("div", {"class": "hashtags"})
+        hastags = hash_span.text.strip()
+        content_dict.update({"hastags":hashtags})
+
+        # Post-Logs (Liste von dicts mit platform & timestamp)
+        logs = []
+        meta_section = soup.find("section", {"class": "posting-meta"})
+        if meta_section:
+            for log in meta_section.find_all("div", {"class": "post-log"}):
+                platform = log.find("span", {"class": "platform"}).get_text(strip=True) if log.find("span", {"class": "platform"}) else None
+                timestamp = log.find("span", {"class": "timestamp"}).get_text(strip=True) if log.find("span", {"class": "timestamp"}) else None
+                logs.append({"platform": platform, "timestamp": timestamp})
+        content_dict.update({"logs":logs})
+
+
+        # Schedules lesen
+        schedules = utils.get_schedules_from_post(file_path)
+        content_dict.update({"schedules":schedules})
+
+        return content_dict
 
 
 
@@ -172,29 +278,74 @@ def personal_post_to_linkedin(text, asset_urn, author):
 
 # --- Einen vorhandenen HTML-Post posten ---
 def post_existing_html(file_path):
-    html_content = Path(file_path).read_text(encoding="utf-8")
-    # Extrahiere Text und Bild-URL rudimentär (hier einfach via Split; für komplexere Templates BeautifulSoup nutzen)
-    text_start = html_content.find("<p>") + 3
-    text_end = html_content.find("</p>")
-    text = html_content[text_start:text_end].strip()
+    data = get_posting_data(file_path)
 
-    img_start = html_content.find('<img src="') + 10
-    img_end = html_content.find('"', img_start)
-    img_url = html_content[img_start:img_end]
+    origin = data["origin"]
+    text = data["text"]
+    confirmed = data["confirmed"]
+    img_url = data["image"]
 
-    author_start = html_content.find('<meta origin="') + 10
-    author_end = html_content.find('"', author_start)
-    origin = html_content[author_start:author_end]
-    if (origin != "company" and origin != "person"):
-        origin = post_as
+    if confirmed != "Yes":
+        print("This post is not confirmed as of now! \nCannot post before.")
+        return 500, None
+    else:
+        print("Origin: ",origin)
+        resp, link = post_to_linkedin(text, img_url, origin)
+        print ("Response from post_existing_html: ", resp)
+        print (f"link to the new post: {link}")
 
-    print("Origin: ",origin)
-    post_to_linkedin(text, img_url, origin)
+        platform = "linkedin"
+        timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
+        add_post_log(file_path, platform, timestamp)
 
-    utils.move_to_used(file_path)
-    #utils.move_to_used(img_url)
+        #utils.move_to_used(file_path)
+        #utils.move_to_used(img_url)
 
-    return True
+        return resp, link
+
+
+
+
+
+def add_post_log(file_path, platform, timestamp):
+    """
+    Fügt in das Post-HTML einen neuen <div class="post-log">-Eintrag ein.
+    add_post_log(file_path, platform, timestamp)
+    Falls das <section class="posting-meta"> nicht existiert, wird es erzeugt.
+    """
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    from bs4 import BeautifulSoup
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Falls meta-Section fehlt → neu anlegen
+    meta_section = soup.find("section", {"class": "posting-meta"})
+    if not meta_section:
+        meta_section = soup.new_tag("section", attrs={"class": "posting-meta", "style": "display:none;"})
+        soup.body.append(meta_section)
+
+    # Neuen Log-Eintrag erstellen
+    post_log = soup.new_tag("div", attrs={"class": "post-log"})
+
+    span_platform = soup.new_tag("span", attrs={"class": "platform"})
+    span_platform.string = platform
+    post_log.append(span_platform)
+
+    span_timestamp = soup.new_tag("span", attrs={"class": "timestamp"})
+    span_timestamp.string = timestamp
+    post_log.append(span_timestamp)
+
+    meta_section.append(post_log)
+
+    # Datei zurückschreiben
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(str(soup))
 
 
 
