@@ -12,7 +12,12 @@ General Part
 3. The parameters in config.ini are described below, so be patient!
 4. Make yourself familiar how to prompt content for your target group. The Sammple is really not useful for anybody! You can try prompting with the chatgpt chatbot, and as soon you are happy with the result, take that prompt in the prompts file. 
 5. Same with the prompt for image generation. Don´t overcomplicate it! Choose style you like and keep the prompt short. Otherwise you´ll get always similar output.
-6. Install the python requirements: pip install -r requirements.txt 
+6. Follow the Docker instruction or know yourself how to run python Code ;-)
+
+Docker
+1. Ensure you have the config and promt files in place
+2. see in the Dockerfile how to build a new container
+   
 
 
 LinkedIn Part
