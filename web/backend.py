@@ -1,10 +1,10 @@
 import sys
 import os
 import configparser
-
+import json
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
-
+import app.config as cfg
 from app.linkedin_bot import web_post_existing_html
 from app.utils import get_schedules_from_post, generate_text, generate_image, save_post_as_html, edit_prompt
 
@@ -17,17 +17,24 @@ from datetime import datetime
 
 CONTENT_DIR = Path(f"{os.getcwd()}/content/new")
 CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
-
+'''
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 promptfile = config["PROMPTS"]["text_file"]
 promptpath = Path(f"{os.getcwd()}/config/{promptfile}")
-
+'''
 
 webapp = Flask(__name__, static_folder="../content/new")
+confapp = Flask(__name__, static_folder="../config")
 
 
+
+###########################################################################################################
+### Handling of postings for linkedin
+
+def get_all_posts():
+    return [f for f in os.listdir(CONTENT_DIR) if f.endswith(".html")]
 
 def load_posts():
     posts = []
@@ -72,39 +79,9 @@ def load_posts():
     return posts
 
 
-
-def load_prompts():
-    prompts = []
-    if not os.path.exists(promptpath):
-        raise FileNotFoundError(f"File not found: {promptpath}")
-
-    with open(promptpath, 'r', encoding="utf-8") as file:
-        for line in file:
-            prompts.append(line.strip())
-
-    return prompts
-
-
-
-
-# Statische Dateien verfügbar machen
-@webapp.route('/content/new/<path:filename>')
-def serve_postings(filename):
-    return send_from_directory("../content/new", filename)
-
-
-@webapp.route('/content/images/<path:filename>')
-def serve_images(filename):
-    return send_from_directory("../content/images", filename)
-
-
-@webapp.route('/content/static/icons/<path:filename>')
-def serve_icon(filename):
-    return send_from_directory("../content/static/icons", filename)
-
     
-
-
+############################
+## toggle confirmed Flag
 @webapp.route("/update_flag", methods=["POST"])
 def update_flag():
     data = request.json
@@ -127,7 +104,8 @@ def update_flag():
     return jsonify(success=True, new_flag=new_flag)
 
 
-
+############################
+## toggle origin/author between personal and company
 @webapp.route("/change_origin", methods=["POST"])
 def change_origin():
     data = request.json
@@ -196,6 +174,11 @@ def delete_post():
 
 
 
+
+##########################################################################################
+### Scheduler for prepared postings
+
+
 @webapp.route("/scheduler", methods=["GET", "POST"])
 def scheduler():
     filename = request.args.get("filename")
@@ -207,8 +190,6 @@ def scheduler():
                            filename=filename,
                            all_files=all_files,
                            schedules=schedules)
-
-
 
 
 
@@ -269,6 +250,9 @@ def delete_schedule():
 
 
 
+#####################################################################################
+### update single cards (for reload after change in schedule, text or postings)
+
 
 @webapp.route("/card/<filename>")
 def get_card(filename):
@@ -282,13 +266,6 @@ def get_card(filename):
     # Du kannst das in ein Partial-Template packen,
     # aber erstmal direkt zurückgeben:
     return html_content
-
-
-
-
-def get_all_posts():
-    return [f for f in os.listdir(CONTENT_DIR) if f.endswith(".html")]
-
 
 
 
@@ -320,6 +297,20 @@ def schedule_submit():
     return redirect(url_for("scheduler_ui"))
 
 
+
+#####################################################################################
+### Prompt handling
+
+def load_prompts():
+    prompts = []
+    if not os.path.exists(cfg.promptpath):
+        raise FileNotFoundError(f"File not found: {cfg.promptpath}")
+
+    with open(cfg.promptpath, 'r', encoding="utf-8") as file:
+        for line in file:
+            prompts.append(line.strip())
+
+    return prompts
 
 
 
@@ -355,7 +346,7 @@ def prompts_page():
 def update_prompt_in_file(old_text, new_text):
     """Ersetzt eine Zeile oder fügt neue hinzu, wenn old_text leer ist."""
     try:
-        with open(promptpath, "r", encoding="utf-8") as f:
+        with open(cfg.promptpath, "r", encoding="utf-8") as f:
             lines = [line.rstrip("\n") for line in f]
 
         updated = False
@@ -371,7 +362,7 @@ def update_prompt_in_file(old_text, new_text):
             # neuer Eintrag, falls old_text leer war oder nicht existierte
             new_lines.append(new_text)
 
-        with open(promptpath, "w", encoding="utf-8") as f:
+        with open(cfg.promptpath, "w", encoding="utf-8") as f:
             f.write("\n".join(new_lines) + "\n")
 
         return True
@@ -396,6 +387,90 @@ def save_prompt():
 
 
 
+#######################################################################################
+### Functions for Config-management
+
+def read_config(file_path=CONFIG_FILE):
+    """Read the configuration file and handle quoted/unquoted values."""
+    config = configparser.ConfigParser()
+
+    # Enable case-sensitive options (optional)
+    config.optionxform = str
+
+    # Read the configuration file
+    config.read(file_path)
+
+    # Strip quotes from values
+    parsed_config = {
+        section: {
+            key: value.strip('"').strip("'")  # Remove both double and single quotes
+            for key, value in config.items(section)
+        }
+        for section in config.sections()
+    }
+    return parsed_config
+
+
+def write_config(config, file_path=CONFIG_FILE):
+    """Write the configuration to a file, preserving quotes around values."""
+    parser = configparser.ConfigParser()
+    for section, options in config.items():
+        parser[section] = {
+            key: f'"{value}"' if not (value.startswith('"') and value.endswith('"')) else value
+            for key, value in options.items()
+        }
+    with open(file_path, "w") as configfile:
+        parser.write(configfile)
+
+
+#######################################################################
+### Pages and actions for Config-management
+
+@webapp.route("/config")
+def conf_index():
+    """Serve the main Web UI for configs."""
+    config_data = read_config()  
+    #return render_template("config_index.html", config=json.dumps(config_data))
+    return render_template("config_index.html", config=config_data)
+
+
+@webapp.route("/config/update", methods=["POST"])
+def config_update():
+    """Update the configuration file."""
+    updated_config = request.json
+    write_config(updated_config)
+    return jsonify({"status": "success"}), 200
+
+
+@webapp.route("/config/save", methods=["POST"])
+def config_save():
+    try:
+        updated_config = request.json
+        write_config(updated_config)
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+#####################################################################################
+#### Static 
+
+# Statische Dateien verfügbar machen
+@webapp.route('/content/new/<path:filename>')
+def serve_postings(filename):
+    return send_from_directory("../content/new", filename)
+
+
+@webapp.route('/content/images/<path:filename>')
+def serve_images(filename):
+    return send_from_directory("../content/images", filename)
+
+
+@webapp.route('/content/static/icons/<path:filename>')
+def serve_icon(filename):
+    return send_from_directory("../content/static/icons", filename)
+
+
 
 @webapp.route("/")
 def index():
@@ -409,3 +484,4 @@ def index():
 if __name__ == "__main__":
     #webapp.run(debug=True)
     webapp.run(host='0.0.0.0', port=4561, debug=True)
+    #confapp.run(host='0.0.0.0', port=4560, debug=True)

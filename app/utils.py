@@ -6,6 +6,7 @@ import os
 import random
 import time
 import random
+import sys
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -14,78 +15,36 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 from openai import OpenAI
 
-
-# --- Konfiguration laden ---
-CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
-config = configparser.ConfigParser()
-config.read(CONFIG_FILE)
-
-openai_token = config["API"]["openai_token"]
-openai_model = config["API"]["openai_model"]
-
-claude_api_key = config["API"]["claude_token"]
-claude_model = config["API"]["claude_model"]
-
-text_ai = config["API"]["text_ai"]
-image_ai = config["API"]["image_ai"]
-
-linkedin_token = config["API"]["linkedin_token"]
-#company_page_id = config["API"]["company_page_id"]
-#person_id = config["API"]["person_id"]
+sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
+import app.config as cfg
 
 
-post_start = config["SCHEDULER"]["post_start"]
-post_end = config["SCHEDULER"]["post_end"]
-timezone = ZoneInfo(config["SCHEDULER"]["timezone"])
-
-dry_run = config["OPTIONS"]["dry_run"]
-post_as = config["TEMPLATES"]["post_as"]
-
-
-# --- Prompts laden ---
-prompts = configparser.ConfigParser()
-prompts.read(f"{os.getcwd()}/config/prompts")
-
-text_prompt = prompts["PROMPTS"]["text_prompt"]
-image_prompt = prompts["PROMPTS"]["image_prompt"]
-
-text_prompt_file = config["PROMPTS"]["text_file"]
-promptpath = Path(f"{os.getcwd()}/config/{text_prompt_file}")
-
-linkedin_tpl = config["TEMPLATES"]["linkedin"]
-
-
-output_dir = Path(f"{os.getcwd()}/content/new")
-output_dir.mkdir(exist_ok=True)
-
-used_dir = Path(f"{os.getcwd()}/content/used")
-used_dir.mkdir(exist_ok=True)
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-openai_client = OpenAI(api_key=openai_token)
+openai_client = OpenAI(api_key=cfg.openai_token)
 
 
 
 def get_dry_run():
-    if dry_run is False:
+    if cfg.dry_run is False:
         return False
     else:
         print("Dry Run enabled. Saving posts locally only. No automated posting.")
         return True
     
 
-def get_author():
-    return post_as
+def get_author_BAK():
+    return cfg.post_as
 
 
 
 
 def random_text_prompt():
-    if not text_prompt_file:
-        return text_prompt
+    if not cfg.text_prompt_file:
+        return cfg.text_prompt
     else:
-        with open(f"{os.getcwd()}/config/{text_prompt_file}", "r", encoding="utf-8") as f:
+        with open(f"{os.getcwd()}/config/{cfg.text_prompt_file}", "r", encoding="utf-8") as f:
             rline = None
             for i, line in enumerate(f, 1):
                 if random.randrange(i) == 0:  # Wahrscheinlichkeit 1/i
@@ -96,9 +55,9 @@ def random_text_prompt():
 
 
 def scheduler():
-    now = datetime.now(timezone).strftime("%H:%M")
-    while not (post_start <= now <= post_end):
-        print(f"⚠️ Nicht im Post-Zeitfenster (Start: {post_start} - End: {post_end} - now: {now}).")
+    now = datetime.now(cfg.timezone).strftime("%H:%M")
+    while not (cfg.post_start <= now <= cfg.post_end):
+        print(f"⚠️ Nicht im Post-Zeitfenster (Start: {cfg.post_start} - End: {cfg.post_end} - now: {now}).")
         time.sleep(1*3)
     else:
         return True
@@ -107,7 +66,7 @@ def scheduler():
 
 
 def generate_text(prompt=None):
-    print("AI in use for text: ", text_ai)
+    print("AI in use for text: ", cfg.text_ai)
 
     if prompt:
         text_prompt = prompt
@@ -115,7 +74,7 @@ def generate_text(prompt=None):
         print("select random prompt to generate Text")
         text_prompt = random_text_prompt()
     
-    if (text_ai == "claude"):
+    if (cfg.text_ai == "claude"):
         text = generate_text_with_claude(text_prompt)
     else:
         text = generate_text_with_chatgpt(text_prompt)
@@ -130,12 +89,12 @@ def generate_text_with_claude(text_prompt):
 
     url = "https://api.anthropic.com/v1/messages"
     headers = {
-        "x-api-key": claude_api_key,
+        "x-api-key": cfg.claude_api_key,
         "Content-Type": "application/json",
         "anthropic-version": "2023-06-01"
     }
     data = {
-        "model": claude_model,
+        "model": cfg.claude_model,
         "max_tokens": 500,
         "messages": [{"role": "user", "content": text_prompt}]
     }
@@ -146,7 +105,7 @@ def generate_text_with_claude(text_prompt):
 
 
 def generate_text_with_chatgpt(text_prompt):
-    if config["OPTIONS"]["demo"]:
+    if cfg.demo:
         print("Demo-Mode is ON")
         return "This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this"
 
@@ -156,7 +115,7 @@ def generate_text_with_chatgpt(text_prompt):
     response = openai_client.chat.completions.create(
         model="gpt-5",  # aktuelles ChatGPT-Modell
         messages=[
-            {"role": "system", "content": config["PROMPTS"]["system_prompt"]},
+            {"role": "system", "content":cfg.system_prompt},
             {"role": "user", "content": text_prompt}
         ],
         #max_tokens=500,
@@ -171,9 +130,9 @@ def generate_text_with_chatgpt(text_prompt):
 def check_text_with_chatgpt(text):
     print("Überprüfe erzeugten Text mit ChatGPT.")
     resp = openai_client.chat.completions.create(
-        model=openai_model,
+        model=cfg.openai_model,
         messages=[
-            {"role": "system", "content": config["PROMPTS"]["check_prompt"]},
+            {"role": "system", "content": cfg.check_prompt},
             {"role": "user", "content": text}
         ]
     )
@@ -182,7 +141,7 @@ def check_text_with_chatgpt(text):
 
 
 def generate_image(text):
-    if config["OPTIONS"]["demo"]:
+    if cfg.demo:
         print("Demo-Mode is ON")
         return "https://picsum.photos/200/300"
 
@@ -190,9 +149,9 @@ def generate_image(text):
     imagefile = f"{os.getcwd()}/content/images/post_{timestamp}.png"
     print(f"Create related Image: {imagefile}")
     response = openai_client.responses.create(
-        model=openai_model,
+        model=cfg.openai_model,
         #size="1024x1024",
-        input = f"{image_prompt}\n\nBezug zum Text: {text}", 
+        input = f"{cfg.image_prompt}\n\nBezug zum Text: {text}", 
         tools=[{"type": "image_generation"}],
     )
 
@@ -215,22 +174,19 @@ def generate_image(text):
 # --- HTML-Post speichern ---
 def save_post_as_html(text, image_url):   
     file_path=Path(f"{os.getcwd()}/content/new/post_{timestamp}.html")
-    company = config["TEMPLATES"]["company_name"]
-    tagln = config["TEMPLATES"]["tagline"]
-
 
     render_linkedin_preview(
-        template_path=Path(f"{os.getcwd()}/content/templates/{linkedin_tpl}"),
+        template_path=Path(f"{os.getcwd()}/content/templates/{cfg.linkedin_tpl}"),
         out_path=file_path,
-        company_name=company,
+        company_name=cfg.company_name,
         logo_url="https://media.licdn.com/dms/image/v2/D4E0BAQFItEUyPgxpAQ/company-logo_100_100/company-logo_100_100/0/1730797026509?e=1759968000&v=beta&t=CFhnhW0YAvXmRjxKGtBTe5XsFWSnvMAzK3mFevmu_hA",
-        tagline=tagln,
+        tagline=cfg.company_tagline,
         text=text,
         image_url=image_url,
         hashtags="",
         reactions=random.randint(20,500), comments=random.randint(1,50), shares=random.randint(0,10),
         confirmed="False", 
-        origin=post_as
+        origin=cfg.post_as
     )
 
     return file_path
@@ -244,7 +200,7 @@ def move_to_used(src):
 
 
 def list_existing_posts():
-    files = list(output_dir.glob("post_*.html"))
+    files = list(cfg.output_dir.glob("post_*.html"))
     for i, f in enumerate(files):
         print(f"[{i}] {f.name}")
     return files
@@ -362,10 +318,10 @@ def edit_prompt(old_text: str, new_text: str):
     Params: existing prompt or empty for a new prompt, new or edited prompt 
     """
 
-    if not os.path.exists(promptpath):
-        open(promptpath, "w", encoding="utf-8").close()
+    if not os.path.exists(cfg.promptpath):
+        open(cfg.promptpath, "w", encoding="utf-8").close()
 
-    with open(promptpath, "r", encoding="utf-8") as f:
+    with open(cfg.promptpath, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f.readlines()]
 
     if old_text:
@@ -380,7 +336,7 @@ def edit_prompt(old_text: str, new_text: str):
     else:
         lines.append(new_text.strip())
 
-    with open(promptpath, "w", encoding="utf-8") as f:
+    with open(cfg.promptpath, "w", encoding="utf-8") as f:
         for line in lines:
             f.write(line + "\n")
 

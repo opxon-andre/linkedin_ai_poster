@@ -11,44 +11,11 @@ from bs4 import BeautifulSoup
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 
-
+import app.config as cfg
 import app.utils as utils
 
 
-# --- Konfiguration laden ---
-CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
-config = configparser.ConfigParser()
-config.read(CONFIG_FILE)
-
-openai_token = config["API"]["openai_token"]
-openai_model = config["API"]["openai_model"]
-
-claude_api_key = config["API"]["claude_token"]
-claude_model = config["API"]["claude_model"]
-
-linkedin_token = config["API"]["linkedin_token"]
-#company_page_id = config["API"]["company_page_id"]
-#person_id = config["API"]["person_id"]
-post_as = config["TEMPLATES"]["post_as"]
-
-
-start_hour = int(config["SCHEDULER"]["post_start"])
-end_hour = int(config["SCHEDULER"]["post_end"])
-
-
-# --- Prompts laden ---
-prompts = configparser.ConfigParser()
-prompts.read(f"{os.getcwd()}/config/prompts")
-
-text_prompt = prompts["PROMPTS"]["text_prompt"]
-image_prompt = prompts["PROMPTS"]["image_prompt"]
-
-
-
-
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-
 
 
 
@@ -57,7 +24,7 @@ def post_to_linkedin(text, image, origin=None):
     ## company post is the default
 
     if origin is None:
-        origin = post_as
+        origin = cfg.post_as
 
     if origin == "company":
         curn = get_company_urn()
@@ -87,7 +54,7 @@ def post_to_linkedin(text, image, origin=None):
 
 def register_image_upload(owner):
     asset_api = "https://api.linkedin.com/v2/assets?action=registerUpload"
-    headers = {"Authorization": f"Bearer {linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
+    headers = {"Authorization": f"Bearer {cfg.linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
     payload = {
                 "registerUploadRequest": {
                     "recipes": [
@@ -132,7 +99,7 @@ def upload_image_bytes(upload_url, image_path):
 
     with open(file_path, 'rb') as f:
         headers = {
-            "Authorization": f"Bearer {linkedin_token}"
+            "Authorization": f"Bearer {cfg.linkedin_token}"
         }
         response = requests.put(upload_url, headers=headers, data=f)
 
@@ -149,7 +116,7 @@ def post_linkedin_api(text, asset_urn, author):
     print("Poste Inhalt auf linkedIn!")
     """Post in LinkedIn hochladen"""
     api_url = "https://api.linkedin.com/v2/ugcPosts"
-    headers = {"Authorization": f"Bearer {linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
+    headers = {"Authorization": f"Bearer {cfg.linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
 
     payload = {
         "author": f"{author}",
@@ -162,11 +129,11 @@ def post_linkedin_api(text, asset_urn, author):
                     {
                         "status": "READY",
                         "description": {
-                            "text": config["TEMPLATES"]["alt_image"]
+                            "text": f"{cfg.alt_image}"
                         },
                         "media": f"{asset_urn}",
                         "title": {
-                            "text": config["TEMPLATES"]["alt_image"]
+                            "text": f"{cfg.alt_image}"
                         }
                     }
                 ]
@@ -231,7 +198,7 @@ def get_posting_data(file_path):
         content_dict.update({"confirmed":confirmed})
 
         # origin auslesen -> wird zu author
-        origin = config["TEMPLATES"]["post_as"]
+        origin = cfg.post_as
         origin_span = soup.find("span", {"class": "origin"})
         origin = origin_span.text.strip()
         content_dict.update({"origin":origin})
@@ -354,7 +321,7 @@ def add_post_log(file_path, platform, timestamp):
 
 def get_person_urn():
     url = "https://api.linkedin.com/v2/me"
-    headers = {"Authorization": f"Bearer {linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
+    headers = {"Authorization": f"Bearer {cfg.linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
@@ -373,7 +340,7 @@ def get_person_urn():
 
 def get_company_urn():
     url = "https://api.linkedin.com/v2/organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR"
-    headers = {"Authorization": f"Bearer {linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
+    headers = {"Authorization": f"Bearer {cfg.linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
