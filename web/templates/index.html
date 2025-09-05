@@ -327,6 +327,29 @@
     });
 
 
+    
+    async function reloadCard(filename) {
+      const cardEl = document.querySelector(`.linkedin-card[data-filename="${filename}"]`);
+      if (!cardEl) return;
+
+      const response = await fetch(`/card/${filename}`);
+      if (!response.ok) {
+          alert("Fehler beim Laden der Card");
+          return;
+      }
+      const newHtml = await response.text();
+
+      // Neuen HTML-String in DOM umwandeln
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = newHtml.trim();
+
+      const newCard = tempDiv.querySelector(".linkedin-card");
+      if (newCard) {
+          cardEl.replaceWith(newCard);
+      }
+    }
+
+
 
  
 

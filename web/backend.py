@@ -270,6 +270,22 @@ def delete_schedule():
 
 
 
+@webapp.route("/card/<filename>")
+def get_card(filename):
+    file_path = os.path.join("content", "new", filename)
+    if not os.path.exists(file_path):
+        return "Not found", 404
+    
+    with open(file_path, "r", encoding="utf-8") as f:
+        html_content = f.read()
+
+    # Du kannst das in ein Partial-Template packen,
+    # aber erstmal direkt zurückgeben:
+    return html_content
+
+
+
+
 def get_all_posts():
     return [f for f in os.listdir(CONTENT_DIR) if f.endswith(".html")]
 

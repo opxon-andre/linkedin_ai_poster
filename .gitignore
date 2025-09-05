@@ -6,3 +6,4 @@ config/config.ini
 config/prompts
 config/textprompts
 .vscode/launch.json
+web/__pycache__/backend.cpython-312.pyc

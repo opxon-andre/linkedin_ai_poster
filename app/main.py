@@ -3,12 +3,31 @@ import datetime
 import argparse
 import time
 import sys
+import threading
+from pathlib import Path
+from bs4 import BeautifulSoup
+from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 
 import linkedin_bot as bot
 import utils
-from pathlib import Path
+import scheduler
+
+from web.backend import webapp
+
+
+
+def run_scheduler(interval=60):
+    scheduler.scheduler(interval)  # jede Minute prüfen
+
+
+def run_flask():
+    webapp.run(host="0.0.0.0", port=4561)
+
+
+
+
 
 
 
@@ -23,7 +42,7 @@ def create_and_save_post(dry_run=True):
         exit()
     else:
         print("Text generation successful!\n")
-        
+
     image_url = utils.generate_image(text)
     html_file = utils.save_post_as_html(text, image_url)
     fqdp = Path(html_file)
@@ -31,6 +50,22 @@ def create_and_save_post(dry_run=True):
     if not dry_run:
         resp = bot.post_to_linkedin(text, image_url, utils.get_author())
         #print(f"Direkt auf LinkedIn gepostet: {resp}")
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    # Scheduler in separatem Thread starten
+    t = threading.Thread(target=run_scheduler, daemon=True)
+    t.start()
+
+    # Flask im Hauptthread starten
+    run_flask()
+
 
 
 
@@ -61,6 +96,15 @@ def main(command=None):
             posts = utils.list_existing_posts()
             bot.post_existing_html(posts[0])
             create_and_save_post(dry_run=True)
+
+        case "scheduler":
+            print("Run scheduler and post when it´s time for it")
+            # Scheduler in separatem Thread starten
+            t = threading.Thread(target=run_scheduler, daemon=True)
+            t.start()
+
+            # Flask im Hauptthread starten
+            run_flask()
             
         case _:
             dry = utils.get_dry_run()
