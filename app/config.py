@@ -1,18 +1,7 @@
 import configparser
-import requests
-import datetime
-import base64
 import os
-import random
-import time
-import random
-
-from datetime import datetime
 from zoneinfo import ZoneInfo
-from bs4 import BeautifulSoup
-
 from pathlib import Path
-from openai import OpenAI
 
 
 # --- Konfiguration laden ---
@@ -49,6 +38,8 @@ check_prompt =      config["PROMPTS"]["check_prompt"].strip('"').strip("'")
 text_prompt_file =  config["PROMPTS"]["text_file"].strip('"').strip("'")
 promptpath = Path(f"{os.getcwd()}/config/{text_prompt_file}")
 
+loglevel =          config["LOGGING"]["loglevel"].strip('"').strip("'")
+logpath = f"{os.getcwd()}{config["LOGGING"]["logpath"].strip('"').strip("'")}"
 
 # --- Prompts laden ---
 prompts = configparser.ConfigParser()

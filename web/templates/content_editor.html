@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .file-path {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: calc(100vh - 200px);
+        }
+
+        .preview-section {
+            padding: 30px;
+            background: #f8fafc;
+            border-right: 3px solid #e2e8f0;
+        }
+
+        .editor-section {
+            padding: 30px;
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            margin-right: 15px;
+            border-radius: 2px;
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 70vh;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .editor-form {
+            height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .editor-form::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .editor-form::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .editor-form::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            opacity: 0;
+            animation: slideInUp 0.6s ease-out forwards;
+        }
+
+        .form-group:nth-child(odd) {
+            animation-delay: 0.1s;
+        }
+
+        .form-group:nth-child(even) {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 0.95em;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #ffffff;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            transform: translateY(-2px);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 160px;
+            font-family: inherit;
+        }
+
+        .button-group {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px 0;
+            margin-top: 20px;
+            border-top: 2px solid #f1f5f9;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-preview {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-preview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+            flex: 1;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .success-message {
+            display: none;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .preview-section {
+                border-right: none;
+                border-bottom: 3px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Content Editor</h1>
+            <div class="file-path" id="filePath">loading File...</div>
+        </div>
+
+        <div class="main-content">
+            <!-- Vorschau Sektion -->
+            <div class="preview-section">
+                <div class="section-title">🖼️ Preview</div>
+                <iframe id="previewFrame" class="preview-frame" src="about:blank"></iframe>
+                <div class="loading" id="previewLoading">loading Preview...</div>
+            </div>
+
+            <!-- Editor Sektion -->
+            <div class="editor-section">
+                <div class="section-title">✏️ Editor</div>
+                <div class="success-message" id="successMessage">
+                    ✅ File saved!
+                </div>
+                <form id="editorForm" class="editor-form">
+                    <!-- Dynamisch generierte Felder werden hier eingefügt -->
+                </form>
+                
+                <div class="button-group">
+                    <button type="button" class="btn btn-preview" onclick="updatePreview()">
+                        🔄 reload Preview
+                    </button>
+                    <button type="button" class="btn btn-save" onclick="saveFile()">
+                        💾 Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Globale Variablen
+        let currentFilePath = '';
+        let formData = {};
+
+        // Beim Laden der Seite
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dateipfad aus URL Parameter extrahieren
+            const urlParams = new URLSearchParams(window.location.search);
+            currentFilePath = urlParams.get('file') || '';
+            
+            document.getElementById('filePath').textContent = currentFilePath || 'Keine Datei ausgewählt';
+            
+            if (currentFilePath) {
+                loadFileContent();
+            }
+        });
+
+        // Dateiinhalt laden und Editor generieren
+        async function loadFileContent() {
+            try {
+                const response = await fetch(`/api/extract-elements?file=${encodeURIComponent(currentFilePath)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    formData = data.elements;
+                    generateEditorForm();
+                    updatePreview();
+                } else {
+                    alert('Fehler beim Laden der Datei: ' + data.error);
+                }
+            } catch (error) {
+                alert('Fehler beim Laden der Datei: ' + error.message);
+            }
+        }
+
+        // Editor-Formular dynamisch generieren
+        function generateEditorForm() {
+            const form = document.getElementById('editorForm');
+            form.innerHTML = '';
+            
+            Object.keys(formData).forEach((key, index) => {
+                const value = formData[key];
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+                formGroup.style.animationDelay = `${index * 0.1}s`;
+                
+                const label = document.createElement('label');
+                label.textContent = key;
+                label.setAttribute('for', key);
+                
+                let input;
+                if (value && value.length > 100) {
+                    input = document.createElement('textarea');
+                    input.rows = 4;
+                } else {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                }
+                
+                input.id = key;
+                input.name = key;
+                input.value = value || '';
+                
+                // Event listener für Änderungen
+                input.addEventListener('input', function() {
+                    formData[key] = this.value;
+                });
+                
+                formGroup.appendChild(label);
+                formGroup.appendChild(input);
+                form.appendChild(formGroup);
+            });
+        }
+
+        // Vorschau aktualisieren
+        async function updatePreview() {
+            const previewFrame = document.getElementById('previewFrame');
+            const loading = document.getElementById('previewLoading');
+            
+            loading.style.display = 'block';
+            previewFrame.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/preview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file: currentFilePath,
+                        elements: formData
+                    })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    previewFrame.src = url;
+                    
+                    previewFrame.onload = function() {
+                        loading.style.display = 'none';
+                        previewFrame.style.display = 'block';
+                    };
+                } else {
+                    throw new Error('Fehler beim Generieren der Vorschau');
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                previewFrame.style.display = 'block';
+                alert('Fehler beim Aktualisieren der Vorschau: ' + error.message);
+            }
+        }
+
+        // Datei speichern
+        async function saveFile() {
+            const successMessage = document.getElementById('successMessage');
+            
+            try {
+                const response = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file: currentFilePath,
+                        elements: formData,
+                        savePath: '/content/new'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    successMessage.style.display = 'block';
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert('Fehler beim Speichern: ' + result.error);
+                }
+            } catch (error) {
+                alert('Fehler beim Speichern: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

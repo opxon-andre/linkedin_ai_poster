@@ -7,6 +7,7 @@ import random
 import time
 import random
 import sys
+import logging
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -19,10 +20,39 @@ sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 import app.config as cfg
 
 
+### Logging
+
+
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 openai_client = OpenAI(api_key=cfg.openai_token)
+
+
+
+def get_log(name=None):
+    """
+    get a log handler
+    hand over the result of os.path.basename(__file__) as name
+    """
+    if not name:
+        name = os.path.basename(__file__)
+
+    loglevel = cfg.loglevel.strip('"').strip("'")
+
+    Path(cfg.logpath).mkdir(parents=True, exist_ok=True)
+    logger = logging.getLogger(name)
+    logger.setLevel(loglevel)
+    fh = logging.FileHandler(f"{cfg.logpath}linkedinbot.log")
+    fh.setLevel(loglevel)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    return logger
+
+
+log = get_log(os.path.basename(__file__))
 
 
 
@@ -33,9 +63,6 @@ def get_dry_run():
         print("Dry Run enabled. Saving posts locally only. No automated posting.")
         return True
     
-
-def get_author_BAK():
-    return cfg.post_as
 
 
 
@@ -65,13 +92,41 @@ def scheduler():
 
 
 
+def create_and_save_post(prompt=None):
+    """
+    Generate new content as html file.
+    optional parameter: a prompt for the Text generator. 
+    If no prompt is give, one will be random selceted from the Promptsfile (see config)
+    """
+    if prompt:
+        log.info("Generating new content with given prompt")
+        text = generate_text(prompt)
+    else:
+        log.info("Gnerate new content with random prompt")
+        text = generate_text()
+    if not text:
+        print("Text generation failed - aborting!")
+        return False, None
+        
+    
+    image_url = generate_image(text)
+    html_file = save_post_as_html(text, image_url)
+    fqdp = Path(html_file)
+    print(f"Post als HTML gespeichert: {fqdp}")
+    log.info(f"New Post saved as {fqdp}")
+    return True, html_file
+
+
+
+
 def generate_text(prompt=None):
     print("AI in use for text: ", cfg.text_ai)
-
+    log.info(f"AI in use for text: {cfg.text_ai}")
     if prompt:
         text_prompt = prompt
     else:
         print("select random prompt to generate Text")
+        log.info("select random prompt to generate Text")
         text_prompt = random_text_prompt()
     
     if (cfg.text_ai == "claude"):
@@ -107,11 +162,13 @@ def generate_text_with_claude(text_prompt):
 def generate_text_with_chatgpt(text_prompt):
     if cfg.demo:
         print("Demo-Mode is ON")
+        log.warning("This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this")
         return "This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this"
 
     print("Generate content with ChatGPT...")
+    log.info("Generate content with ChatGPT...")
 
-    print("Prompt für Text: ", text_prompt)
+    log.debug(f"Prompt for Text:  {text_prompt}")
     response = openai_client.chat.completions.create(
         model="gpt-5",  # aktuelles ChatGPT-Modell
         messages=[
@@ -142,12 +199,12 @@ def check_text_with_chatgpt(text):
 
 def generate_image(text):
     if cfg.demo:
-        print("Demo-Mode is ON")
+        log.warning("Demo-Mode is ON")
         return "https://picsum.photos/200/300"
 
 
     imagefile = f"{os.getcwd()}/content/images/post_{timestamp}.png"
-    print(f"Create related Image: {imagefile}")
+    log.info(f"Create related Image: {imagefile}")
     response = openai_client.responses.create(
         model=cfg.openai_model,
         #size="1024x1024",
@@ -166,14 +223,15 @@ def generate_image(text):
         image_base64 = image_data[0]
         with open(imagefile, "wb") as f:
             f.write(base64.b64decode(image_base64))
-    print("Image generated.")
+    log.debug("Image generated.")
     return imagefile
 
 
 
 # --- HTML-Post speichern ---
-def save_post_as_html(text, image_url):   
-    file_path=Path(f"{os.getcwd()}/content/new/post_{timestamp}.html")
+def save_post_as_html(text, image_url, file_path=None):
+    if not file_path:   
+        file_path=Path(f"{os.getcwd()}/content/new/post_{timestamp}.html")
 
     render_linkedin_preview(
         template_path=Path(f"{os.getcwd()}/content/templates/{cfg.linkedin_tpl}"),
@@ -188,7 +246,7 @@ def save_post_as_html(text, image_url):
         confirmed="False", 
         origin=cfg.post_as
     )
-
+    log.info(f"html preview created as {file_path}")
     return file_path
 
 
@@ -198,7 +256,7 @@ def move_to_used(src):
     #os.rename(src, dest)
     return True
 
-
+# Only for CLI Mode
 def list_existing_posts():
     files = list(cfg.output_dir.glob("post_*.html"))
     for i, f in enumerate(files):
@@ -232,8 +290,8 @@ def render_linkedin_preview(template_path: str, out_path: str, *,
         "{{REACTIONS_COUNT}}": str(reactions),
         "{{COMMENTS_COUNT}}": str(comments),
         "{{SHARES_COUNT}}": str(shares),
-        "{{CONFIRMED}}": confirmed or "False",
-        "{{ORIGIN}}": origin or "company",
+        "{{CONFIRMED}}": confirmed or "No",
+        "{{ORIGIN}}": origin or "Company",
     }
 
     for placeholder, value in replacements.items():

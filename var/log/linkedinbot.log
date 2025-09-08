@@ -1,0 +1,100 @@
+2025-09-06 01:26:58,708 - utils.py - INFO - AI in use for text: openai
+2025-09-06 01:26:58,708 - utils.py - INFO - select random prompt to generate Text
+2025-09-06 01:26:58,709 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-06 01:26:58,710 - utils.py - WARNING - Demo-Mode is ON
+2025-09-06 01:26:58,712 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250906_012555.html
+2025-09-06 01:49:34,231 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250906_014913.html
+2025-09-06 01:52:24,482 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250906_015220.html
+2025-09-06 18:30:49,833 - main.py - INFO - run scheduler with an interval of 60s
+2025-09-06 18:30:49,834 - main.py - INFO - starting webapp on port 4561
+2025-09-06 18:51:51,356 - linkedin_bot.py - INFO - Web interaction: posting now file C:\AI\linkedin_ai_poster\content\new\post_20250906_184415.html
+2025-09-06 18:51:51,356 - linkedin_bot.py - INFO - Web interaction: posting now file C:\AI\linkedin_ai_poster\content\new\post_20250906_184415.html
+2025-09-06 18:56:46,522 - linkedin_bot.py - INFO - Web interaction: posting now file C:\AI\linkedin_ai_poster\content\new\post_20250906_184415.html
+2025-09-06 18:56:46,522 - linkedin_bot.py - INFO - Web interaction: posting now file C:\AI\linkedin_ai_poster\content\new\post_20250906_184415.html
+2025-09-06 18:56:58,367 - main.py - INFO - run scheduler with an interval of 60s
+2025-09-06 18:56:58,367 - main.py - INFO - starting webapp on port 4561
+2025-09-06 18:57:12,060 - linkedin_bot.py - INFO - Web interaction: posting now file C:\AI\linkedin_ai_poster\content\new\post_20250906_184415.html
+2025-09-06 18:57:12,060 - linkedin_bot.py - INFO - Web interaction: posting now file C:\AI\linkedin_ai_poster\content\new\post_20250906_184415.html
+2025-09-06 18:57:13,021 - linkedin_bot.py - INFO - Post as Company - urn:li:organization:105524818
+2025-09-06 18:57:13,021 - linkedin_bot.py - INFO - Post as Company - urn:li:organization:105524818
+2025-09-06 18:57:13,021 - linkedin_bot.py - DEBUG - Enter: register_image_upload
+2025-09-06 18:57:13,021 - linkedin_bot.py - DEBUG - Enter: register_image_upload
+2025-09-06 18:57:13,866 - linkedin_bot.py - INFO - Image /content/images/post_20250906_184415.png upload as asset urn:li:digitalmediaAsset:D4E22AQFC3DQ5JVj68g
+2025-09-06 18:57:13,866 - linkedin_bot.py - INFO - Image /content/images/post_20250906_184415.png upload as asset urn:li:digitalmediaAsset:D4E22AQFC3DQ5JVj68g
+2025-09-06 18:57:15,788 - linkedin_bot.py - INFO - Image C:\AI\linkedin_ai_poster/content/images/post_20250906_184415.png uploaded to:https://www.linkedin.com/dms-uploads/sp/v2/D4E22AQFC3DQ5JVj68g/uploaded-image/B4EZkf9epkGwAA-/0?ca=vector_feedshare&cn=uploads&iri=B01-78&sync=0&v=beta&ut=3tIg0bhUOpTXU1   - with code: 201
+2025-09-06 18:57:15,788 - linkedin_bot.py - INFO - Image C:\AI\linkedin_ai_poster/content/images/post_20250906_184415.png uploaded to:https://www.linkedin.com/dms-uploads/sp/v2/D4E22AQFC3DQ5JVj68g/uploaded-image/B4EZkf9epkGwAA-/0?ca=vector_feedshare&cn=uploads&iri=B01-78&sync=0&v=beta&ut=3tIg0bhUOpTXU1   - with code: 201
+2025-09-06 18:57:15,789 - linkedin_bot.py - DEBUG - 
+2025-09-06 18:57:15,789 - linkedin_bot.py - DEBUG - 
+2025-09-06 18:57:15,791 - linkedin_bot.py - INFO - Start post to linkedin
+2025-09-06 18:57:15,791 - linkedin_bot.py - INFO - Start post to linkedin
+2025-09-06 18:57:17,724 - linkedin_bot.py - INFO - post send to linkedin
+2025-09-06 18:57:17,724 - linkedin_bot.py - INFO - post send to linkedin
+2025-09-07 12:57:07,238 - main.py - INFO - run scheduler with an interval of 60s
+2025-09-07 12:57:07,238 - main.py - INFO - starting webapp on port 4561
+2025-09-07 12:59:50,525 - utils.py - INFO - Generating new content with given prompt
+2025-09-07 12:59:50,525 - utils.py - INFO - Generating new content with given prompt
+2025-09-07 12:59:50,526 - utils.py - INFO - AI in use for text: openai
+2025-09-07 12:59:50,526 - utils.py - INFO - AI in use for text: openai
+2025-09-07 12:59:50,527 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-07 12:59:50,527 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-07 12:59:50,527 - utils.py - WARNING - Demo-Mode is ON
+2025-09-07 12:59:50,527 - utils.py - WARNING - Demo-Mode is ON
+2025-09-07 12:59:50,544 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250907_125704.html
+2025-09-07 12:59:50,544 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250907_125704.html
+2025-09-07 12:59:50,545 - utils.py - INFO - New Post saved as C:\AI\linkedin_ai_poster\content\new\post_20250907_125704.html
+2025-09-07 12:59:50,545 - utils.py - INFO - New Post saved as C:\AI\linkedin_ai_poster\content\new\post_20250907_125704.html
+2025-09-07 13:05:15,700 - utils.py - INFO - Generating new content with given prompt
+2025-09-07 13:05:15,700 - utils.py - INFO - Generating new content with given prompt
+2025-09-07 13:05:15,701 - utils.py - INFO - AI in use for text: openai
+2025-09-07 13:05:15,701 - utils.py - INFO - AI in use for text: openai
+2025-09-07 13:05:15,702 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-07 13:05:15,702 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-07 13:05:15,702 - utils.py - WARNING - Demo-Mode is ON
+2025-09-07 13:05:15,702 - utils.py - WARNING - Demo-Mode is ON
+2025-09-07 13:05:15,707 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250907_125704.html
+2025-09-07 13:05:15,707 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250907_125704.html
+2025-09-07 13:05:15,707 - utils.py - INFO - New Post saved as C:\AI\linkedin_ai_poster\content\new\post_20250907_125704.html
+2025-09-07 13:05:15,707 - utils.py - INFO - New Post saved as C:\AI\linkedin_ai_poster\content\new\post_20250907_125704.html
+2025-09-07 13:08:47,458 - main.py - INFO - run scheduler with an interval of 60s
+2025-09-07 13:08:47,458 - main.py - INFO - starting webapp on port 4561
+2025-09-07 13:09:05,568 - utils.py - INFO - Generating new content with given prompt
+2025-09-07 13:09:05,568 - utils.py - INFO - Generating new content with given prompt
+2025-09-07 13:09:05,568 - utils.py - INFO - AI in use for text: openai
+2025-09-07 13:09:05,568 - utils.py - INFO - AI in use for text: openai
+2025-09-07 13:09:05,570 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-07 13:09:05,570 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-07 13:09:05,570 - utils.py - WARNING - Demo-Mode is ON
+2025-09-07 13:09:05,570 - utils.py - WARNING - Demo-Mode is ON
+2025-09-07 13:09:05,575 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250907_130846.html
+2025-09-07 13:09:05,575 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250907_130846.html
+2025-09-07 13:09:05,576 - utils.py - INFO - New Post saved as C:\AI\linkedin_ai_poster\content\new\post_20250907_130846.html
+2025-09-07 13:09:05,576 - utils.py - INFO - New Post saved as C:\AI\linkedin_ai_poster\content\new\post_20250907_130846.html
+2025-09-07 13:09:41,822 - utils.py - INFO - Generating new content with given prompt
+2025-09-07 13:09:41,822 - utils.py - INFO - Generating new content with given prompt
+2025-09-07 13:09:41,823 - utils.py - INFO - AI in use for text: openai
+2025-09-07 13:09:41,823 - utils.py - INFO - AI in use for text: openai
+2025-09-07 13:09:41,823 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-07 13:09:41,823 - utils.py - WARNING - This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this
+2025-09-07 13:09:41,824 - utils.py - WARNING - Demo-Mode is ON
+2025-09-07 13:09:41,824 - utils.py - WARNING - Demo-Mode is ON
+2025-09-07 13:09:41,828 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250907_130846.html
+2025-09-07 13:09:41,828 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new\post_20250907_130846.html
+2025-09-07 13:09:41,828 - utils.py - INFO - New Post saved as C:\AI\linkedin_ai_poster\content\new\post_20250907_130846.html
+2025-09-07 13:09:41,828 - utils.py - INFO - New Post saved as C:\AI\linkedin_ai_poster\content\new\post_20250907_130846.html
+2025-09-07 13:35:17,213 - main.py - INFO - run scheduler with an interval of 60s
+2025-09-07 13:35:17,213 - main.py - INFO - starting webapp on port 4561
+2025-09-07 13:38:56,058 - main.py - INFO - run scheduler with an interval of 60s
+2025-09-07 13:38:56,058 - main.py - INFO - starting webapp on port 4561
+2025-09-08 14:51:10,643 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/post_20250906_184415.html.tmp
+2025-09-08 14:51:33,753 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/post_20250906_184415.html.tmp
+2025-09-08 14:51:46,560 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/post_20250906_184415.html.tmp
+2025-09-08 14:52:23,572 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/post_20250906_184415.html.tmp
+2025-09-08 14:53:01,097 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/post_20250906_184415.html.tmp
+2025-09-08 14:53:42,148 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/post_20250906_184415.html.tmp
+2025-09-08 15:07:43,253 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/post_20250906_184415.html.tmp
+2025-09-08 15:10:45,566 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/post_20250906_184415.html.tmp
+2025-09-08 15:20:46,294 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/template.html.tmp
+2025-09-08 15:28:16,785 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/template.html.tmp
+2025-09-08 15:28:34,961 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/template.html.tmp
+2025-09-08 15:29:02,279 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/template.html.tmp
+2025-09-08 17:44:25,392 - utils.py - INFO - html preview created as C:\AI\linkedin_ai_poster\content\new/template.html.tmp

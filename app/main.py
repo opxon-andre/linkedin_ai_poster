@@ -17,12 +17,16 @@ import scheduler
 from web.backend import webapp
 
 
+log = utils.get_log(os.path.basename(__file__))
+
 
 def run_scheduler(interval=60):
+    log.info(f"run scheduler with an interval of {interval}s")
     scheduler.scheduler(interval)  # jede Minute prüfen
 
 
 def run_flask():
+    log.info("starting webapp on port 4561")
     webapp.run(host="0.0.0.0", port=4561)
 
 
@@ -33,21 +37,7 @@ def run_flask():
 
 # --- Hauptablauf Content generation---
 def create_and_save_post(dry_run=True):
-    text = ""
-    text = utils.generate_text()
-    if not text:
-        print("Text generation failed - aborting!")
-        exit()
-
-    image_url = utils.generate_image(text)
-    html_file = utils.save_post_as_html(text, image_url)
-    fqdp = Path(html_file)
-    print(f"Post als HTML gespeichert: {fqdp}")
-    if not dry_run:
-        resp = bot.post_to_linkedin(text, image_url, cfg.post_as)
-        #print(f"Direkt auf LinkedIn gepostet: {resp}")
-
-
+    ret, file = utils.create_and_save_post()
 
 
 

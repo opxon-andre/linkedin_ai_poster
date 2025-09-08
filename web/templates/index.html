@@ -144,11 +144,43 @@
       font-size: 28px;
       cursor: pointer;
   }
+
+  .modal_g {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal_g.hidden_g { display: none; }
+  .modal_g-content {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 250px;
+  }
+
+
   </style>
 </head>
 <body>
   <h1 style="text-align:center;">Prepared Postings</h1>
   <div class="grid">
+    {% for template in templates %}
+    <div class="card">
+      <div class="iframe-wrapper">
+          <iframe src="/content/new/{{ template.filename }}"></iframe>
+      </div>
+      <div class="card-controls">
+        <button class="btn btn-new-custom"
+                onclick="window.open('/contenteditor?file={{ template.filename }}', '_blank')">
+          Create Custom Posting
+        </button>
+        
+      </div>
+    </div>
+    {% endfor %}
     {% for post in posts %}
       <div class="card">
         <div class="iframe-wrapper">
@@ -221,13 +253,12 @@
           <p>{{prompt}}</p>
         </div>
         <div class="card-controls">
-          <button class="btn generate"
-              data-prompt="{{ prompt }}"
-              onclick="generateNew(this)">
-            Generate new
+          <button class="generateBtn" data-prompt="{{ prompt }}">
+            Generate New
           </button>
           <button class="btn btn-promptEdit" data-prompt="{{prompt}}">
             ✏️ Edit
+          </button>
         </div>
       </div>
       {% endfor %}
@@ -247,6 +278,23 @@
     <div class="modal-content">
       <span class="close p_close">&times;</span>
       <iframe id="promptFrame" src="" style="width:90%;height:400px;border:none;"></iframe>
+    </div>
+  </div>
+
+
+  <!-- Popup: Wird generiert -->
+  <div id="generatingPopup" class="modal_g hidden_g">
+    <div class="modal_g-content">
+      <p>Generate new content...</p>
+    </div>
+  </div>
+
+
+  <!-- Popup: Fertig -->
+  <div id="finishedPopup" class="modal hidden">
+    <div class="modal-content">
+      <p>New content is ready!</p>
+      <button id="okBtn">OK</button>
     </div>
   </div>
 
@@ -283,9 +331,20 @@
       const response = await fetch("/generate_new", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ filename })
       });
     }   
+
+
+    async function createCustomContent(button) {
+      const filename = button.dataset.filename;
+
+      const response = await fetch("/new_custom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename })
+      });
+    }  
 
 
 
@@ -419,6 +478,49 @@
         alert("Fehler beim Löschen");
       }
     }
+
+    
+    document.querySelectorAll(".generateBtn").forEach(btn => {
+      btn.addEventListener("click", function() {
+        let prompt = this.dataset.prompt;
+
+        // Popup anzeigen
+        const generatingPopup = document.getElementById("generatingPopup");
+        generatingPopup.classList.remove("hidden_g");
+
+        // Popup nach 3 Sekunden automatisch schließen
+        setTimeout(() => {
+          generatingPopup.classList.add("hidden_g");
+        }, 3000);
+
+        // Anfrage an Flask starten
+        fetch("/generate_new_content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: prompt })
+        })
+        .then(() => {
+          // Polling starten
+          let interval = setInterval(() => {
+            fetch("/check_status")
+              .then(r => r.json())
+              .then(data => {
+                if (data.finished) {
+                  clearInterval(interval);
+                  const finishedPopup = document.getElementById("finishedPopup");
+                  finishedPopup.classList.remove("hidden_g");
+
+                  document.getElementById("okBtn").onclick = function() {
+                    finishedPopup.classList.add("hidden_g");
+                    location.reload();
+                  };
+                }
+              });
+          }, 5000);
+        });
+      });
+    });
+
   </script>
 </body>
 </html>

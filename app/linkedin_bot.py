@@ -17,6 +17,9 @@ import app.utils as utils
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+log = utils.get_log(os.path.basename(__file__))
+
+
 
 
 def post_to_linkedin(text, image, origin=None):
@@ -26,23 +29,25 @@ def post_to_linkedin(text, image, origin=None):
     if origin is None:
         origin = cfg.post_as
 
-    if origin == "company":
+    if origin.lower() == "company":
         curn = get_company_urn()
         company_page_id = curn.rsplit(":", 1)[-1]
         author = f"urn:li:organization:{company_page_id}"
     
-    if origin == "personal": 
+    if origin.lower() == "personal": 
         purn = get_person_urn()
         person_id = purn.rsplit(":", 1)[-1]
         author = f"urn:li:person:{person_id}"
 
     print(f"Post as {origin}", author)
+    log.info(f"Post as {origin} - {author}")
 
     ## prepare image for linkedin
     asset_urn, upload_url = register_image_upload(author)
     
     ## upload to linkedin
     print(f"Image {image} upload as asset {asset_urn}")
+    log.info(f"Image {image} upload as asset {asset_urn}")
     upload_image_bytes(upload_url, image)
 
     resp, link = post_linkedin_api(text, asset_urn, author)
@@ -53,6 +58,7 @@ def post_to_linkedin(text, image, origin=None):
 
 
 def register_image_upload(owner):
+    log.debug("Enter: register_image_upload")
     asset_api = "https://api.linkedin.com/v2/assets?action=registerUpload"
     headers = {"Authorization": f"Bearer {cfg.linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
     payload = {
@@ -95,6 +101,7 @@ def upload_image_bytes(upload_url, image_path):
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
+        log.error(f"File not found: {file_path}")
         exit()
 
     with open(file_path, 'rb') as f:
@@ -105,7 +112,8 @@ def upload_image_bytes(upload_url, image_path):
 
         # Check the response
         print(f"Image {file_path} uploaded to:{upload_url}   - with code: {response.status_code}")
-        print(response.text)
+        log.info(f"Image {file_path} uploaded to:{upload_url}   - with code: {response.status_code}")
+        log.debug(response.text)
 
 
 
@@ -114,6 +122,7 @@ def upload_image_bytes(upload_url, image_path):
 # --- LinkedIn Posting ---
 def post_linkedin_api(text, asset_urn, author):
     print("Poste Inhalt auf linkedIn!")
+    log.info("Start post to linkedin")
     """Post in LinkedIn hochladen"""
     api_url = "https://api.linkedin.com/v2/ugcPosts"
     headers = {"Authorization": f"Bearer {cfg.linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
@@ -146,6 +155,7 @@ def post_linkedin_api(text, asset_urn, author):
     #print(payload)
     r = requests.post(url=api_url, headers=headers, json=payload)
     print("LinkedIn Response:", r.status_code, r.text)
+    log.debug(f"LinkedIn Response: {r.status_code} - {r.text}")
     if r.status_code <= 300:
         data = json.loads(r.text)
         urn = data["id"]
@@ -153,7 +163,9 @@ def post_linkedin_api(text, asset_urn, author):
         company_urn = get_company_urn()
         #link = f"https://www.linkedin.com/feed/update/urn:li:activity:{id}"
         link = f"https://www.linkedin.com/company/{company_urn}/admin/dashboard/"
-        print(f"Link zum neuen Post: \n{link}")
+        #print(f"Link zum neuen Post: \n{link}")
+        print("Posting done - find it on your linkedin page")
+        log.info("post send to linkedin")
     
     return r.status_code, link
 
@@ -162,11 +174,13 @@ def post_linkedin_api(text, asset_urn, author):
 
 def web_post_existing_html(file):
     print(f"Web interaction: posting now file {file}")
+    log.info(f"Web interaction: posting now file {file}")
     try:
         resp, link = post_existing_html(file)
         return resp, link
     except Exception as e:
         print("Error during posting of existing html file: ", e)
+        log.error("Error during posting of existing html file: ", e)
         return False, None
 
 
@@ -176,6 +190,7 @@ def get_posting_data(file_path):
     """ 
     read the file and returns all information as one dict
     Expects a full qualified path to the file
+    Optional is an Array with elements to read
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
@@ -254,12 +269,13 @@ def post_existing_html(file_path):
 
     if confirmed != "Yes":
         print("This post is not confirmed as of now! \nCannot post before.")
+        log.warning(f"This post is not confirmed as of now! Cannot post before - {file_path}")
         return 500, None
     else:
         print("Origin: ",origin)
         resp, link = post_to_linkedin(text, img_url, origin)
         print ("Response from post_existing_html: ", resp)
-        print (f"link to the new post: {link}")
+        #print (f"link to the new post: {link}")
 
         platform = "linkedin"
         timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")

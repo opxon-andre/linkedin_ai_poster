@@ -2,11 +2,15 @@ import sys
 import os
 import configparser
 import json
+import threading
+import time
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 import app.config as cfg
 from app.linkedin_bot import web_post_existing_html
-from app.utils import get_schedules_from_post, generate_text, generate_image, save_post_as_html, edit_prompt
+from app.utils import get_schedules_from_post, generate_text, generate_image, save_post_as_html, edit_prompt, create_and_save_post, extract_post_elements
+
+import contenteditor_functions as ccf
 
 from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for
 from pathlib import Path
@@ -25,9 +29,10 @@ promptfile = config["PROMPTS"]["text_file"]
 promptpath = Path(f"{os.getcwd()}/config/{promptfile}")
 '''
 
-webapp = Flask(__name__, static_folder="../content/new")
-confapp = Flask(__name__, static_folder="../config")
+webapp = Flask(__name__, static_folder="../content")
 
+# Status-Speicher für Hintergrundjobs
+generation_status = {"running": False, "finished": False}
 
 
 ###########################################################################################################
@@ -36,9 +41,26 @@ confapp = Flask(__name__, static_folder="../config")
 def get_all_posts():
     return [f for f in os.listdir(CONTENT_DIR) if f.endswith(".html")]
 
-def load_posts():
+
+
+def load_templates():
+    dir = Path(f"{os.getcwd()}/content/templates")
+    if not os.path.isfile(Path(f"{os.getcwd()}/content/new/template.html")):
+        file = generate_new_template()
+        print(f"New template generated: {file}")
+        os.rename(file, f"{os.getcwd()}/content/new/template.html")
+    return load_posts(ending="template.html")
+
+
+
+
+def load_posts(read_dir=None, ending="post_*.html"):
+    if not read_dir:
+        read_dir = CONTENT_DIR
+
+    print(f"read_dir: {read_dir}")
     posts = []
-    for file in CONTENT_DIR.glob("*.html"):
+    for file in read_dir.glob(ending):
         with open(file, "r", encoding="utf-8") as f:
 
             soup = BeautifulSoup(f, "html.parser")
@@ -250,25 +272,6 @@ def delete_schedule():
 
 
 
-#####################################################################################
-### update single cards (for reload after change in schedule, text or postings)
-
-
-@webapp.route("/card/<filename>")
-def get_card(filename):
-    file_path = os.path.join("content", "new", filename)
-    if not os.path.exists(file_path):
-        return "Not found", 404
-    
-    with open(file_path, "r", encoding="utf-8") as f:
-        html_content = f.read()
-
-    # Du kannst das in ein Partial-Template packen,
-    # aber erstmal direkt zurückgeben:
-    return html_content
-
-
-
 @webapp.route("/schedule_submit", methods=["POST"])
 def schedule_submit():
     filename = request.form.get("filename")
@@ -296,6 +299,23 @@ def schedule_submit():
 
     return redirect(url_for("scheduler_ui"))
 
+
+#####################################################################################
+### update single cards (for reload after change in schedule, text or postings)
+
+
+@webapp.route("/card/<filename>")
+def get_card(filename):
+    file_path = os.path.join("content", "new", filename)
+    if not os.path.exists(file_path):
+        return "Not found", 404
+    
+    with open(file_path, "r", encoding="utf-8") as f:
+        html_content = f.read()
+
+    # Du kannst das in ein Partial-Template packen,
+    # aber erstmal direkt zurückgeben:
+    return html_content
 
 
 #####################################################################################
@@ -386,6 +406,37 @@ def save_prompt():
 
 
 
+def a_create_content(prompt):
+    global generation_status
+    generation_status["running"] = True
+    generation_status["finished"] = False
+
+    # hier kommt dein eigentlicher Code hin:
+    #time.sleep(120)  # simuliert deine 2 Minuten Generierung
+    #filename = "new_post.html"
+    #with open(os.path.join("content", "new", filename), "w", encoding="utf-8") as f:
+    #    f.write("<html><body><h1>Neues Posting</h1></body></html>")
+
+    ## calling function in utils
+    ret, file = create_and_save_post(prompt)
+
+    generation_status["running"] = False
+    generation_status["finished"] = True
+
+
+@webapp.route("/generate_new_content", methods=["POST"])
+def generate_new_content():
+    data = request.get_json()
+    prompt = data.get("prompt", "")
+    t = threading.Thread(target=a_create_content, args=(prompt,))
+    t.start()
+    return jsonify({"status": "started", "prompt": prompt})
+
+
+@webapp.route("/check_status")
+def check_status():
+    return jsonify(generation_status)
+
 
 #######################################################################################
 ### Functions for Config-management
@@ -452,6 +503,81 @@ def config_save():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+
+#####################################################################################
+### Custom content creator
+
+@webapp.route("/new_custom", methods=["POST"])
+def new_custom_content():
+    filename = request.form.get("filename")
+    print(f"Filename: {request.form}")
+    filepath = os.path.join(CONTENT_DIR, filename)
+    return render_template("custom.html", filepath=filepath)
+
+
+
+def generate_new_template():
+    text = "Create something custom"
+    image_url = "https://picsum.photos/200/300"
+    html_file = save_post_as_html(text, image_url)
+    return html_file
+
+
+
+@webapp.route("/custom_creator")
+def custom_creator():
+    return render_template("custom_creator.html")
+
+@webapp.route("/save_custom_post", methods=["POST"])
+def save_custom_post():
+    data = request.get_json()
+    html = data.get("html", "")
+
+    if not html.strip():
+        return jsonify({"success": False, "error": "Empty HTML"})
+
+    # Dateiname mit Timestamp
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"post_{ts}.html"
+    file_path = os.path.join(CONTENT_DIR, filename)
+
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(html)
+        return jsonify({"success": True, "filename": filename})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+    
+
+
+
+#####################################################################################
+## Custom Creator alternative
+
+@webapp.route('/contenteditor')
+def content_editor():
+    return render_template('content_editor_2.html')
+
+
+@webapp.route('/api/file-info')
+def api_file_info():
+    return ccf.api_file_info()
+
+
+@webapp.route('/api/save', methods=['POST'])
+def api_save():
+    return ccf.api_save()
+
+
+@webapp.route('/api/preview', methods=['POST'])
+def api_preview():
+    return ccf.api_preview()
+
+
+@webapp.route('/api/extract-elements')
+def api_extract_elements():
+    return ccf.api_extract_elements()
+
 #####################################################################################
 #### Static 
 
@@ -474,9 +600,10 @@ def serve_icon(filename):
 
 @webapp.route("/")
 def index():
+    templates = load_templates()
     posts = load_posts()
     prompts = load_prompts()
-    return render_template("index.html", posts=posts, prompts=prompts)
+    return render_template("index.html", posts=posts, prompts=prompts, templates=templates)
 
 
 

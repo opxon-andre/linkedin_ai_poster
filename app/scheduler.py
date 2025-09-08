@@ -9,9 +9,10 @@ from bs4 import BeautifulSoup
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 import utils
 import linkedin_bot as bot
+import app.config as cfg
 
 # Verzeichnis mit den vorbereiteten Postings
-SCHEDULE_DIR = utils.output_dir
+SCHEDULE_DIR = cfg.output_dir
 
 # -- Hilfsfunktionen --------------------------------------------------------
 
