@@ -8,3 +8,5 @@ config/textprompts
 .vscode/launch.json
 web/__pycache__/backend.cpython-312.pyc
 *.BAK
+/var
+*.log
