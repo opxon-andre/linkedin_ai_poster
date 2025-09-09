@@ -31,7 +31,14 @@ def run_flask():
 
 
 
+def start():
+    print("Run scheduler and post when it´s time for it (Multithread)")
+    # Scheduler in separatem Thread starten
+    t = threading.Thread(target=run_scheduler, daemon=True)
+    t.start()
 
+    # Flask im Hauptthread starten
+    run_flask()
 
 
 
@@ -68,13 +75,7 @@ def main(command=None):
             create_and_save_post(dry_run=True)
 
         case "scheduler":
-            print("Run scheduler and post when it´s time for it (Multithread)")
-            # Scheduler in separatem Thread starten
-            t = threading.Thread(target=run_scheduler, daemon=True)
-            t.start()
-
-            # Flask im Hauptthread starten
-            run_flask()
+            start()
             
         case _:
             dry = utils.get_dry_run()
