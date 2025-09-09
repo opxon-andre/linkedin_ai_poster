@@ -7,8 +7,8 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
-import utils
-import linkedin_bot as bot
+
+import app.linkedin_bot as bot
 import app.config as cfg
 
 # Verzeichnis mit den vorbereiteten Postings

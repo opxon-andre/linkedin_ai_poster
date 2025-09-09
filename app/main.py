@@ -32,6 +32,13 @@ def run_flask():
 
 
 def start():
+    ## Check if config File is available
+    CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
+    if not os.path.exists(CONFIG_FILE):
+        print("There is no config.ini file in /config/ \nConfigure the setting according to the Template First")
+        log.error("There is no config.ini file in /config/ \nConfigure the setting according to the Template First")
+        exit()
+
     print("Run scheduler and post when it´s time for it (Multithread)")
     # Scheduler in separatem Thread starten
     t = threading.Thread(target=run_scheduler, daemon=True)
@@ -50,7 +57,7 @@ def create_and_save_post(dry_run=True):
 
 
 def main(command=None):
-    if command is None:
+    if command:
         parser = argparse.ArgumentParser()
         parser.add_argument("command")
         args = parser.parse_args()
@@ -78,8 +85,7 @@ def main(command=None):
             start()
             
         case _:
-            dry = utils.get_dry_run()
-            create_and_save_post(dry_run=dry)
+            start()
 
 
 

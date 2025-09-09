@@ -4,8 +4,11 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 
-# --- Konfiguration laden ---
 CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
+if not os.path.exists(CONFIG_FILE):
+    CONFIG_FILE = f"{os.getcwd()}/config/config.ini.TEMPLATE"
+
+# --- Konfiguration laden ---
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 

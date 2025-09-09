@@ -30,19 +30,23 @@ RUN apt-get update && apt-get install -y git
 
 WORKDIR /app
 
-COPY requirements.txt ./
+#COPY . .
+#COPY requirements.txt ./
+
+RUN git clone https://github.com/opxon-andre/linkedin_ai_poster.git /app
+
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-#COPY . .
+
 
 EXPOSE 4561
-RUN git clone https://github.com/opxon-andre/linkedin_ai_poster.git /app
+
 
 ### possible entrypoints:
     ## generate -> only generates new content
     ## automode -> takes the most recent content from the content/new directory, posts it to LI, and create a new post for the stack.
-ENTRYPOINT ["python", "app/main.py", "scheduler"]
+ENTRYPOINT ["python", "app/main.py"]
 
 
 

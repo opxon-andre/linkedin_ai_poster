@@ -10,3 +10,4 @@ config/textprompts
 *.BAK
 /var
 *.log
+Docker-Help.txt

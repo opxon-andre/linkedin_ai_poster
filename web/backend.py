@@ -10,7 +10,7 @@ import app.config as cfg
 from app.linkedin_bot import web_post_existing_html
 from app.utils import get_schedules_from_post, generate_text, generate_image, save_post_as_html, edit_prompt, create_and_save_post, extract_post_elements
 
-import contenteditor_functions as ccf
+import web.contenteditor_functions as ccf
 
 from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for
 from pathlib import Path
