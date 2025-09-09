@@ -30,6 +30,13 @@ def run_flask():
     webapp.run(host="0.0.0.0", port=4561)
 
 
+def run_setup():
+    log.info("Config is missing... running setup now")
+    log.warning("Config is missing... running setup now")
+    webapp.run(host="0.0.0.0", port=4562)
+
+
+
 
 def start():
     ## Check if config File is available
@@ -37,6 +44,7 @@ def start():
     if not os.path.exists(CONFIG_FILE):
         print("There is no config.ini file in /config/ \nConfigure the setting according to the Template First")
         log.error("There is no config.ini file in /config/ \nConfigure the setting according to the Template First")
+        run_setup()
         exit()
 
     print("Run scheduler and post when it´s time for it (Multithread)")
