@@ -589,7 +589,6 @@ def api_images():
 
 @webapp.route('/content/images/<filename>')
 def serve_image(filename):
-    print(f"serve Image ONE: {filename}")
     return ccf.serve_image(filename)
 
 

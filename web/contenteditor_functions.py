@@ -191,6 +191,18 @@ def api_save():
         file = data['file']
         file_path = f"{CONTENT_DIR}/{file}"
         elements = data['elements']
+        
+        image = elements.get('image')
+        if image.startswith("http"):
+            print(f"Use url for Image: {image}")
+        else:
+            image_file = os.path.basename(image)
+            # set path according to filesystem
+            images_dir = os.path.join(CONTENT_DIR, "../images")
+            #image = f"{images_dir}/{image_file}"
+            image = f"/content/images/{image_file}"
+            elements.update({'image':image})
+
         print(f"SAVE Elements: {elements}")
         save_path = data.get('savePath', f"{CONTENT_DIR}")
         
