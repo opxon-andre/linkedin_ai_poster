@@ -556,7 +556,7 @@ def save_custom_post():
 
 @webapp.route('/contenteditor')
 def content_editor():
-    return render_template('content_editor_2.html')
+    return render_template('content_editor.html')
 
 
 @webapp.route('/api/file-info')
@@ -578,6 +578,27 @@ def api_preview():
 def api_extract_elements():
     return ccf.api_extract_elements()
 
+
+#####################################################################################
+#### Images in Preview
+
+@webapp.route('/api/images')
+def api_images():
+    return ccf.api_images()
+
+
+@webapp.route('/content/images/<filename>')
+def serve_image(filename):
+    print(f"serve Image ONE: {filename}")
+    return ccf.serve_image(filename)
+
+
+@webapp.route('/api/upload-image', methods=['POST'])
+def api_upload_image():
+    return ccf.api_upload_image()
+
+
+
 #####################################################################################
 #### Static 
 
@@ -587,9 +608,10 @@ def serve_postings(filename):
     return send_from_directory("../content/new", filename)
 
 
-@webapp.route('/content/images/<path:filename>')
-def serve_images(filename):
-    return send_from_directory("../content/images", filename)
+#@webapp.route('/content/images/<path:filename>')
+#def serve_images(filename):
+#    print(f"serve Image TWO: {filename}")
+#    return send_from_directory("../content/images", filename)
 
 
 @webapp.route('/content/static/icons/<path:filename>')

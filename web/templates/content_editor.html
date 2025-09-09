@@ -165,7 +165,7 @@
 
         textarea {
             resize: vertical;
-            min-height: 160px;
+            min-height: 80px;
             font-family: inherit;
         }
 
@@ -249,6 +249,177 @@
             font-weight: 600;
         }
 
+        /* Bildauswahl Styles */
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .image-thumbnail {
+            width: 120px;
+            height: 80px;
+            object-fit: cover;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        .image-thumbnail:hover {
+            border-color: #4f46e5;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.2);
+        }
+
+        .filename-display {
+            font-size: 0.85em;
+            color: #6b7280;
+            font-family: monospace;
+            padding: 5px 10px;
+            background: #f1f5f9;
+            border-radius: 5px;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Popup Styles */
+        .image-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-popup.show {
+            opacity: 1;
+        }
+
+        .popup-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .image-popup.show .popup-content {
+            transform: scale(1);
+        }
+
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .popup-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2em;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .image-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .image-grid::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .image-grid::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 10px;
+        }
+
+        .image-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .image-item:hover {
+            background: #f8fafc;
+            border-color: #4f46e5;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.1);
+        }
+
+        .image-item img {
+            width: 120px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .image-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .image-name {
+            font-size: 0.85em;
+            color: #374151;
+            text-align: center;
+            font-weight: 500;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -265,22 +436,22 @@
     <div class="container">
         <div class="header">
             <h1>📝 Content Editor</h1>
-            <div class="file-path" id="filePath">loading File...</div>
+            <div class="file-path" id="filePath">Datei wird geladen...</div>
         </div>
 
         <div class="main-content">
             <!-- Vorschau Sektion -->
             <div class="preview-section">
-                <div class="section-title">🖼️ Preview</div>
+                <div class="section-title">🖼️ Vorschau</div>
                 <iframe id="previewFrame" class="preview-frame" src="about:blank"></iframe>
-                <div class="loading" id="previewLoading">loading Preview...</div>
+                <div class="loading" id="previewLoading">Vorschau wird geladen...</div>
             </div>
 
             <!-- Editor Sektion -->
             <div class="editor-section">
                 <div class="section-title">✏️ Editor</div>
                 <div class="success-message" id="successMessage">
-                    ✅ File saved!
+                    ✅ Datei erfolgreich gespeichert!
                 </div>
                 <form id="editorForm" class="editor-form">
                     <!-- Dynamisch generierte Felder werden hier eingefügt -->
@@ -288,10 +459,10 @@
                 
                 <div class="button-group">
                     <button type="button" class="btn btn-preview" onclick="updatePreview()">
-                        🔄 reload Preview
+                        🔄 Vorschau aktualisieren
                     </button>
                     <button type="button" class="btn btn-save" onclick="saveFile()">
-                        💾 Save
+                        💾 Datei speichern
                     </button>
                 </div>
             </div>
@@ -349,28 +520,218 @@
                 label.textContent = key;
                 label.setAttribute('for', key);
                 
-                let input;
-                if (value && value.length > 100) {
-                    input = document.createElement('textarea');
-                    input.rows = 4;
+                // Spezielle Behandlung für Bildfelder
+                if (key.toLowerCase() === 'image' || key.toLowerCase().includes('image') || key.toLowerCase().includes('img')) {
+                    // Bild-Vorschau Container
+                    const imageContainer = document.createElement('div');
+                    imageContainer.className = 'image-container';
+                    
+                    const thumbnail = document.createElement('img');
+                    thumbnail.className = 'image-thumbnail';
+                    
+                    // Intelligente URL-Behandlung - HIER IST DIE KRITISCHE ÄNDERUNG!
+                    let imageUrl;
+                    if (value) {
+                        if (value.startsWith('http://') || value.startsWith('https://')) {
+                            imageUrl = value; // Vollständige URL direkt verwenden
+                        } else {
+                           // imageUrl = `/content/images/${value}`; // Lokaler Pfad
+                            imageUrl = `${value}`; // Lokaler Pfad
+                        }
+                    } else {
+                        imageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjgwIiB2aWV3Qm94PSIwIDAgMTIwIDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTIwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik00MCAzNkw1MCAyNkw3MCA0NkwxMDAgMTZWNjRINDBWMzZaIiBmaWxsPSIjRDFENUQ5Ci8+CjxjaXJjbGUgY3g9IjMwIiBjeT0iMjgiIHI9IjQiIGZpbGw9IiNEMUQ1RDkiLz4KPHRLECY+PC90c3Bhbj4KPC9zdmc+';
+                    }
+                    
+                    thumbnail.src = imageUrl;
+                    thumbnail.alt = 'Bildvorschau';
+                    thumbnail.title = 'Klicken um Bild zu ändern';
+                    
+                    // Fehlerbehandlung
+                    thumbnail.onerror = function() {
+                        this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjgwIiB2aWV3Qm94PSIwIDAgMTIwIDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTIwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik00MCAzNkw1MCAyNkw3MCA0NkwxMDAgMTZWNjRINDBWMzZaIiBmaWxsPSIjRDFENUQ5Ci8+CjxjaXJjbGUgY3g9IjMwIiBjeT0iMjgiIHI9IjQiIGZpbGw9IiNEMUQ1RDkiLz4KPHRLECY+PC90c3Bhbj4KPC9zdmc+';
+                    };
+                    
+                    // Click-Handler für Bildauswahl-Popup
+                    thumbnail.addEventListener('click', function() {
+                        openImageSelector(key);
+                    });
+                    
+                    // Verstecktes Input-Feld
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.id = key;
+                    hiddenInput.name = key;
+                    hiddenInput.value = value || '';
+                    
+                    // Dateiname/URL-Anzeige
+                    const filenameDisplay = document.createElement('div');
+                    filenameDisplay.className = 'filename-display';
+                    if (value) {
+                        if (value.startsWith('http://') || value.startsWith('https://')) {
+                            // Bei URLs nur den Domain-Teil + Dateiname anzeigen
+                            try {
+                                const url = new URL(value);
+                                const pathParts = url.pathname.split('/');
+                                const filename = pathParts[pathParts.length - 1] || url.hostname;
+                                filenameDisplay.textContent = filename;
+                                filenameDisplay.title = value; // Vollständige URL als Tooltip
+                            } catch (e) {
+                                filenameDisplay.textContent = value;
+                            }
+                        } else {
+                            filenameDisplay.textContent = value;
+                        }
+                    } else {
+                        filenameDisplay.textContent = 'Kein Bild ausgewählt';
+                    }
+                    
+                    imageContainer.appendChild(thumbnail);
+                    imageContainer.appendChild(filenameDisplay);
+                    imageContainer.appendChild(hiddenInput);
+                    
+                    formGroup.appendChild(label);
+                    formGroup.appendChild(imageContainer);
                 } else {
-                    input = document.createElement('input');
-                    input.type = 'text';
+                    // Normale Eingabefelder
+                    let input;
+                    if (value && value.length > 100) {
+                        input = document.createElement('textarea');
+                        input.rows = 4;
+                    } else {
+                        input = document.createElement('input');
+                        input.type = 'text';
+                    }
+                    
+                    input.id = key;
+                    input.name = key;
+                    input.value = value || '';
+                    
+                    // Event listener für Änderungen
+                    input.addEventListener('input', function() {
+                        formData[key] = this.value;
+                    });
+                    
+                    formGroup.appendChild(label);
+                    formGroup.appendChild(input);
                 }
                 
-                input.id = key;
-                input.name = key;
-                input.value = value || '';
-                
-                // Event listener für Änderungen
-                input.addEventListener('input', function() {
-                    formData[key] = this.value;
-                });
-                
-                formGroup.appendChild(label);
-                formGroup.appendChild(input);
+							   
+								 
+										  
+				
+												  
+															
+											   
+				   
+				
+											 
+											 
                 form.appendChild(formGroup);
             });
+        }
+
+        // Bildauswahl-Popup öffnen
+        async function openImageSelector(fieldKey) {
+            try {
+                const response = await fetch('/api/images');
+                const data = await response.json();
+                
+                if (data.success) {
+                    showImagePopup(data.images, fieldKey);
+                } else {
+                    alert('Fehler beim Laden der Bilder: ' + data.error);
+                }
+            } catch (error) {
+                alert('Fehler beim Laden der Bilder: ' + error.message);
+            }
+        }
+
+        // Bildauswahl-Popup anzeigen
+        function showImagePopup(images, fieldKey) {
+            // Popup erstellen
+            const popup = document.createElement('div');
+            popup.className = 'image-popup';
+            popup.innerHTML = `
+                <div class="popup-content">
+                    <div class="popup-header">
+                        <h2>Bild auswählen</h2>
+                        <button class="close-btn" onclick="closeImagePopup()">&times;</button>
+                    </div>
+                    <div class="image-grid" id="imageGrid">
+                        ${images.map(img => `
+                            <div class="image-item" onclick="selectImage('${img}', '${fieldKey}')">
+                                <img src="/content/images/${img}" alt="${img}" title="${img}">
+                                <div class="image-name">${img}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Popup animiert einblenden
+            setTimeout(() => {
+                popup.classList.add('show');
+            }, 10);
+        }
+
+        // Bild auswählen
+        function selectImage(imageName, fieldKey) {
+            // Formularwert aktualisieren
+            formData[fieldKey] = imageName;
+            
+            // Hidden input aktualisieren
+            const hiddenInput = document.getElementById(fieldKey);
+            if (hiddenInput) {
+                hiddenInput.value = imageName;
+            }
+            
+            // Thumbnail aktualisieren
+            const container = hiddenInput.closest('.form-group');
+            const img = container.querySelector('.image-thumbnail');
+            if (img) {
+                // Prüfe ob es eine URL oder lokaler Dateiname ist
+                let newImageUrl;
+                if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
+                    newImageUrl = imageName;
+                } else {
+                    newImageUrl = `/content/images/${imageName}`;
+                }
+                img.src = newImageUrl;
+            }
+            
+            // Dateiname-Anzeige aktualisieren
+            const filenameDisplay = container.querySelector('.filename-display');
+            if (filenameDisplay) {
+                if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
+                    try {
+                        const url = new URL(imageName);
+                        const pathParts = url.pathname.split('/');
+                        const filename = pathParts[pathParts.length - 1] || url.hostname;
+                        filenameDisplay.textContent = filename;
+                        filenameDisplay.title = imageName;
+                    } catch (e) {
+                        filenameDisplay.textContent = imageName;
+                    }
+                } else {
+                    filenameDisplay.textContent = imageName;
+                    filenameDisplay.title = imageName;
+                }
+            }
+            
+            closeImagePopup();
+        }
+
+        // Popup schließen
+        function closeImagePopup() {
+            const popup = document.querySelector('.image-popup');
+            if (popup) {
+                popup.classList.remove('show');
+                setTimeout(() => {
+                    popup.remove();
+                }, 300);
+            }
         }
 
         // Vorschau aktualisieren
@@ -397,7 +758,7 @@
                     const blob = await response.blob();
                     const url = URL.createObjectURL(blob);
                     previewFrame.src = url;
-                    
+                        
                     previewFrame.onload = function() {
                         loading.style.display = 'none';
                         previewFrame.style.display = 'block';

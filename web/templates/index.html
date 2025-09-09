@@ -82,43 +82,45 @@
       background: #dc3545;
       color: white;
     }
-    .posting-history {
+    .posting-list {
         padding: 10px;
         font-size: 13px;
         color: #555;
+        float: right;
     }
-    .posting-history ul {
+    .posting-list ul {
         list-style: none;
         padding: 0;
         margin: 0;
     }
-    .posting-history li {
+    .posting-list li {
         display: flex;
         align-items: center;
         gap: 6px;
         margin-bottom: 4px;
     }
-    .posting-history img {
+    .posting-list img {
         width: 16px;
         height: 16px;
     }
-    .schedule {
+    .schedule-list {
+      float: left;
         padding: 10px;
         font-size: 13px;
         color: #555;
     }
-    .schedule ul {
+    .schedule-list ul {
         list-style: none;
         padding: 0;
         margin: 0;
     }
-    .schedule li {
+    .schedule-list li {
         display: flex;
         align-items: center;
         gap: 6px;
         margin-bottom: 4px;
     }
-    .schedule img {
+    .schedule-list img {
         width: 16px;
         height: 16px;
     }
@@ -186,15 +188,17 @@
         <div class="iframe-wrapper">
           <iframe src="/content/new/{{ post.filename }}"></iframe>
         </div>
+
+
+
         <div class="card-controls">
           <button class="btn btn-preview"
                   onclick="window.open('/content/new/{{ post.filename }}', '_blank')">
             Open Preview
           </button>
-          <button class="btn btn-confirmed {% if post.confirmed == 'Yes' %}active{% endif %}"
-                  data-filename="{{ post.filename }}"
-                  onclick="toggleConfirmed(this)">
-            {% if post.confirmed == "Yes" %}Confirmed{% else %}☐ Confirm{% endif %}
+          <button class="btn btn-edit"
+                  onclick="window.open('/contenteditor?file={{ post.filename }}', '_blank')">
+            Edit
           </button>
           <button class="btn btn-delete"
                   data-filename="{{ post.filename }}"
@@ -202,6 +206,20 @@
             Delete
           </button>
         </div>
+
+        <div class="card-controls">
+          <button class="btn btn-confirmed {% if post.confirmed == 'Yes' %}active{% endif %}"
+                  data-filename="{{ post.filename }}"
+                  onclick="toggleConfirmed(this)">
+            {% if post.confirmed == "Yes" %}Confirmed{% else %}☐ Confirm{% endif %}
+          </button>
+          <button class="btn btn-origin {% if post.origin == 'Company' %}active{% endif %}"
+                  data-filename="{{ post.filename }}"
+                  onclick="changeOrigin(this)">
+                  {% if post.origin == "Company" %}Company{% else %}Personal{% endif %}
+          </button>
+        </div>
+
         <div class="card-controls">
           <button class="btn btn-post"
                   data-filename="{{ post.filename }}"
@@ -213,16 +231,13 @@
                   >
             Schedule
           </button>
-          <button class="btn btn-origin {% if post.origin == 'Company' %}active{% endif %}"
-                  data-filename="{{ post.filename }}"
-                  onclick="changeOrigin(this)">
-                  {% if post.origin == "Company" %}Company{% else %}Personal{% endif %}
-          </button>
         </div>
+
+
         
-        <div class="posting-history">
+        <div class="posting-list">
           <ul>
-            <li>History</li>
+            <li><h4>History</h4></li>
             {% for hentry in post.history %}
               <li>
                 <img src="/content/static/icons/{{ hentry.platform }}.png" alt="{{ hentry.platform }}">
@@ -230,8 +245,10 @@
               </li>
             {% endfor %}
           </ul>
+        </div>
+        <div class="schedule-list">
           <ul>
-            <li>Schedule</li>
+            <li><h4>Schedule</h4></li>
             {% for sentry in post.schedule %}
             <li>
               ⏰ {{ sentry.datetime_fmt }}
@@ -245,7 +262,7 @@
 
 
 
-  <h1 style="text-align:center;">Generate new Postings</h1>
+  <h1 style="text-align:center;">Generate new Postings with AI</h1>
   <div class="grid">
     {% for prompt in prompts %}
       <div class="card">

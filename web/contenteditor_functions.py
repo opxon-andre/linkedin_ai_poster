@@ -2,6 +2,7 @@ from flask import Flask, render_template_string, request, jsonify, send_file, re
 import os
 import re
 from bs4 import BeautifulSoup
+from werkzeug.utils import secure_filename
 import tempfile
 import json
 from datetime import datetime
@@ -18,8 +19,8 @@ CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
 
 
 
-editable_elements = ['confirmed', 'origin', 'text', 'image']
-
+editable_elements = ['text', 'image']
+#editable_elements = ['confirmed', 'origin', 'text', 'image']
 
 
 def extract_post_elements_local(html_file):
@@ -45,7 +46,7 @@ def apply_elements_to_html(file, elements):
         #old_elements = extract_post_elements(file)
         text = elements.get('text')
         image = elements.get('image')
-        #print(f"Image: {image}")
+        print(f"Image: {image}")
 
         temp_file = f"{CONTENT_DIR}/{file}.tmp"
         save_post_as_html(text, image, temp_file)
@@ -123,7 +124,22 @@ def api_preview():
         file = data['file']
         file_path = f"{CONTENT_DIR}/{file}"
         elements = data['elements']
+#        print(f"Preview ELements: {elements}")
+
+        image = elements.get('image')
+        if image.startswith("http"):
+            print(f"Use url for Image: {image}")
+        else:
+            image_file = os.path.basename(image)
+            # set path according to filesystem
+            images_dir = os.path.join(CONTENT_DIR, "../images")
+            #image = f"{images_dir}/{image_file}"
+            image = f"/content/images/{image_file}"
+            url = request.host_url + "/content/images/" + image_file
+            elements.update({'image':url})
         
+#        print(f"Preview ELements 2: {elements}")
+
         # Prüfe ob Datei existiert
         if not os.path.exists(file_path):
             return jsonify({
@@ -175,6 +191,7 @@ def api_save():
         file = data['file']
         file_path = f"{CONTENT_DIR}/{file}"
         elements = data['elements']
+        print(f"SAVE Elements: {elements}")
         save_path = data.get('savePath', f"{CONTENT_DIR}")
         
         # Prüfe ob Originaldatei existiert
@@ -300,4 +317,126 @@ def backup_original_file(file_path):
 
 
 
+def api_images():
+    """
+    API-Endpunkt zum Abrufen aller verfügbaren Bilder aus /content/images
+    """
+    try:
+        images_dir = os.path.join(CONTENT_DIR, "../images")
+        #images_dir = '/content/images'
+        
+        # Prüfe ob das Verzeichnis existiert
+        if not os.path.exists(images_dir):
+            return jsonify({
+                'success': False,
+                'error': 'Bilderverzeichnis nicht gefunden'
+            }), 404
+        
+        # Unterstützte Bildformate
+        supported_formats = ('.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp')
+        
+        # Alle Bilddateien im Verzeichnis finden
+        images = []
+        for filename in os.listdir(images_dir):
+            if filename.lower().endswith(supported_formats):
+                # Zusätzliche Informationen über das Bild sammeln
+                filepath = os.path.join(images_dir, filename)
+                stat = os.stat(filepath)
+                
+                images.append({
+                    'filename': filename,
+                    'size': stat.st_size,
+                    'modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
+                })
+        
+        # Nach Änderungsdatum sortieren (neueste zuerst)
+        images.sort(key=lambda x: x['modified'], reverse=True)
+        
+        # Nur Dateinamen für die Frontend-Anzeige zurückgeben
+        image_filenames = [img['filename'] for img in images]
+        
+        return jsonify({
+            'success': True,
+            'images': image_filenames,
+            'count': len(image_filenames),
+            'details': images  # Zusätzliche Details falls benötigt
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Fehler beim Laden der Bilder: {str(e)}'
+        }), 500
+    
 
+
+def serve_image(filename):
+    """
+    Statische Bilddateien aus /content/images bereitstellen
+    """
+    images_dir = os.path.join(CONTENT_DIR, "../images")
+    filename = os.path.basename(filename)
+    
+    
+    # Sicherheitsprüfung gegen Directory Traversal
+    if '..' in filename or '/' in filename:
+        return jsonify({'error': 'Ungültiger Dateiname'}), 400
+    
+    filepath = os.path.join(images_dir, filename)
+    
+    if not os.path.exists(filepath):
+        return jsonify({'error': 'Bild nicht gefunden'}), 404
+    
+    return send_file(filepath)
+
+
+def api_upload_image():
+    """
+    API-Endpunkt zum Hochladen neuer Bilder
+    """
+    try:
+        if 'image' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'Keine Datei ausgewählt'
+            }), 400
+        
+        file = request.files['image']
+        
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'Keine Datei ausgewählt'
+            }), 400
+        
+        # Prüfe Dateierweiterung
+        allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'}
+        if not ('.' in file.filename and 
+                file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
+            return jsonify({
+                'success': False,
+                'error': 'Ungültiges Dateiformat'
+            }), 400
+        
+        # Sichere den Dateinamen
+        filename = secure_filename(file.filename)
+        
+        # Erstelle Verzeichnis falls nicht vorhanden
+        images_dir = os.path.join(CONTENT_DIR, "../images")
+        os.makedirs(images_dir, exist_ok=True)
+        
+        # Speichere die Datei
+        filepath = os.path.join(images_dir, filename)
+        file.save(filepath)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Bild erfolgreich hochgeladen',
+            'filename': filename
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Fehler beim Hochladen: {str(e)}'
+        }), 500
