@@ -8,7 +8,7 @@
 ##  docker run --rm --name linkedin-bot linkedin-bot:1.0
 ## 
 ## exposing the webUI Port 4561 to a local Port, mounting the config and content directorys with:
-## docker run -p 4561:4561 -v <your favorite config directory>:/config -v <your favorite content directory>:/content --name linkedin-bot linkedin-bot:1.0
+## docker run -p 4561:4561 -v <your favorite config directory>:/config -v <your favorite content directory>:/content -v <your favorite Logging directory>:/var/log --name linkedin-bot linkedin-bot:1.0
 ## 
 
 
@@ -34,10 +34,10 @@ COPY requirements.txt ./
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+#COPY . .
 
 EXPOSE 4561
-#RUN git clone https://github.com/opxon-andre/linkedin_ai_poster.git /app
+RUN git clone https://github.com/opxon-andre/linkedin_ai_poster.git /app
 
 ### possible entrypoints:
     ## generate -> only generates new content
