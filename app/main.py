@@ -20,6 +20,18 @@ threadlock = threading.Lock()
 
 log = utils.get_log(os.path.basename(__file__))
 
+def run_preflight():
+    log_path = Path(cfg.logpath)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    log.debug("Check availability of files and directories...")
+    Path(cfg.promptpath).mkdir(parents=True, exist_ok=True)
+
+    content_path = Path(f"{os.getcwd()}/content/new")
+    content_path.parent.mkdir(parents=True, exist_ok=True)
+
+
+
 
 def run_scheduler(interval=60):
     log.info(f"run scheduler with an interval of {interval}s")
@@ -94,9 +106,13 @@ def main(command=None):
             create_and_save_post(dry_run=True)
 
         case "scheduler":
+            log.info("Starting Scheduler from main")
+            run_preflight()
             start()
             
         case _:
+            log.info("Starting Scheduler from main (default)")
+            run_preflight()
             start()
 
 
