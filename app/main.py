@@ -24,9 +24,6 @@ def run_preflight():
     log_path = Path(cfg.logpath)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    log.debug("Check availability of files and directories...")
-    Path(cfg.promptpath).mkdir(parents=True, exist_ok=True)
-
     content_path = Path(f"{os.getcwd()}/content/new")
     content_path.parent.mkdir(parents=True, exist_ok=True)
 

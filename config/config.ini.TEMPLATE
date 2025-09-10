@@ -41,6 +41,10 @@ system_prompt = "Du bist ein erfahrener Marketing- und LinkedIn-Texter."
 check_prompt = "Prüfe, ob der Text für LinkedIn geeignet ist. Antworte nur mit 'OK' oder 'NICHT OK'."
 
 
+[LOGGING]
+loglevel = "DEBUG"
+logpath = "/var/log/linkedinbot.log"
+
 
 [OPTIONS]
 dry_run = True   ; # If True, the generated content is saved locally only. You can call the function with the parameter "post_existing" to post generated content later on
@@ -51,12 +55,12 @@ demo = false    ; no text or image generation. Fixed Info only to save computing
 [TEMPLATES]
 #; post as company or person (default value)
 post_as = company       
-company_name = opXon GmbH
-tagline = IT-Service-Management Consulting
-logo_url=https://media.licdn.com/dms/image/v2/D4E0BAQFItEUyPgxpAQ/company-logo_100_100/company-logo_100_100/0/1730797026509?e=1759968000&v=beta&t=CFhnhW0YAvXmRjxKGtBTe5XsFWSnvMAzK3mFevmu_hA
+company_name = foobar GmbH
+tagline = LinkedIn Marketing Experts
+logo_url=https://healthmint.com.au/wp-content/uploads/2018/09/Poop_Emoji-e1536795602667.png
 
 # alt Text for images
-alt_image = opXon GmbH - ITSM Experts
+alt_image = FooBar Image
 
 #;Template for linkedIn postings. File only, no path!
 linkedin = linkedin.tpl.html
