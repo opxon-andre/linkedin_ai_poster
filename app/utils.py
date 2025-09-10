@@ -182,7 +182,7 @@ def generate_text_with_claude(text_prompt):
 
 
 def generate_text_with_chatgpt(text_prompt):
-    if cfg.demo != "False":
+    if cfg.demo:
         log.warning("This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this")
         return "This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this"
 
@@ -190,7 +190,7 @@ def generate_text_with_chatgpt(text_prompt):
 
     log.debug(f"Prompt for Text:  {text_prompt}")
     response = openai_client.chat.completions.create(
-        model="gpt-5",  # aktuelles ChatGPT-Modell
+        model=cfg.openai_model,  # aktuelles ChatGPT-Modell
         messages=[
             {"role": "system", "content":cfg.system_prompt},
             {"role": "user", "content": text_prompt}
@@ -218,9 +218,10 @@ def check_text_with_chatgpt(text):
 
 
 def generate_image(text):
-    if cfg.demo != False:
-        log.warning("Demo-Mode is ON")
+    if cfg.demo:
+        log.warning(f"Demo-Mode is {cfg.demo}")
         imagefile = "https://picsum.photos/200/300"
+        return imagefile
 
     try:
         imagefile = f"{os.getcwd()}/content/images/post_{timestamp}.png"
