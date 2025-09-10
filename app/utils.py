@@ -53,7 +53,7 @@ def get_log(name: str = __name__, log_file: str = cfg.logpath) -> logging.Logger
     """
     Returns a logger that logs to console and a file, without duplicating messages.
     """
-    if os.path.isdir.isfile(log_file):
+    if os.path.isdir(log_file):
         log_file = f"{log_file}/linkendinbot.log"
 
     logger = logging.getLogger(name)
