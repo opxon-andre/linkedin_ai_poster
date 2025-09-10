@@ -108,7 +108,7 @@ def upload_image_bytes(upload_url, image_path):
         headers = {
             "Authorization": f"Bearer {cfg.linkedin_token}"
         }
-        if cfg.demo == False:
+        if cfg.demo == "False":
             response = requests.put(upload_url, headers=headers, data=f)
         else:
             log.warning(f"Demo Mode ist ON - otherwise an image would be uploaded to LI (Faking response now)")
@@ -328,27 +328,6 @@ def add_post_log(file_path, platform, timestamp):
 
     soup = BeautifulSoup(html, "html.parser")
     soup, span = add_post_log_span(soup, platform, timestamp)
-
-
-    '''    # Falls meta-Section fehlt → neu anlegen
-    meta_section = soup.find("section", {"class": "posting-meta"})
-    if not meta_section:
-        meta_section = soup.new_tag("section", attrs={"class": "posting-meta", "style": "display:none;"})
-        soup.body.append(meta_section)
-
-    # Neuen Log-Eintrag erstellen
-    post_log = soup.new_tag("div", attrs={"class": "post-log"})
-
-    span_platform = soup.new_tag("span", attrs={"class": "platform"})
-    span_platform.string = platform
-    post_log.append(span_platform)
-
-    span_timestamp = soup.new_tag("span", attrs={"class": "timestamp"})
-    span_timestamp.string = timestamp
-    post_log.append(span_timestamp)
-
-    meta_section.append(post_log)
-'''
     
     log.info(f"new post-log in {file_path}")
     # Datei zurückschreiben

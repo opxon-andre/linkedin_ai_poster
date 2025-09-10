@@ -566,12 +566,12 @@ def api_file_info():
 
 @webapp.route('/api/save', methods=['POST'])
 def api_save():
-    return ccf.api_save(update=False)
+    return ccf.api_save(update=True)
 
 
 @webapp.route('/api/save_as_new', methods=['POST'])
 def api_save_as_new():
-    return ccf.api_save(update=True)
+    return ccf.api_save(update=False)
 
 
 @webapp.route('/api/preview', methods=['POST'])
