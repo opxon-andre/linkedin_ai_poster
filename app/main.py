@@ -16,13 +16,15 @@ import scheduler
 
 from web.backend import webapp
 
+threadlock = threading.Lock()
 
 log = utils.get_log(os.path.basename(__file__))
 
 
 def run_scheduler(interval=60):
     log.info(f"run scheduler with an interval of {interval}s")
-    scheduler.scheduler(interval)  # jede Minute prüfen
+    with threadlock:
+        scheduler.scheduler(interval)  # jede Minute prüfen
 
 
 def run_flask():
@@ -42,18 +44,20 @@ def start():
     ## Check if config File is available
     CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
     if not os.path.exists(CONFIG_FILE):
-        print("There is no config.ini file in /config/ \nConfigure the setting according to the Template First")
         log.error("There is no config.ini file in /config/ \nConfigure the setting according to the Template First")
         run_setup()
         exit()
 
     print("Run scheduler and post when it´s time for it (Multithread)")
     # Scheduler in separatem Thread starten
-    t = threading.Thread(target=run_scheduler, daemon=True)
-    t.start()
-
+    t1 = threading.Thread(target=run_scheduler, daemon=True)
+    #t2 = threading.Thread(target=run_flask, daemon=True)
+    t1.start()
+    #t2.start()
+    
     # Flask im Hauptthread starten
     run_flask()
+    
 
 
 
@@ -94,6 +98,7 @@ def main(command=None):
             
         case _:
             start()
+
 
 
 

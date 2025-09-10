@@ -20,9 +20,6 @@ sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 import app.config as cfg
 
 
-### Logging
-
-
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -30,7 +27,7 @@ openai_client = OpenAI(api_key=cfg.openai_token)
 
 
 
-def get_log(name=None):
+def get_log_BAK(name=None):
     """
     get a log handler
     hand over the result of os.path.basename(__file__) as name
@@ -48,6 +45,37 @@ def get_log(name=None):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+
+    return logger
+
+
+def get_log(name: str = __name__, log_file: str = cfg.logpath) -> logging.Logger:
+    """
+    Returns a logger that logs to console and a file, without duplicating messages.
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(cfg.loglevel)
+
+    if not logger.hasHandlers():
+        # --- Console handler ---
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(cfg.loglevel)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+
+        # --- File handler ---
+        # Ensure log directory exists
+        log_path = Path(log_file)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        fh = logging.FileHandler(log_file)
+        fh.setLevel(cfg.loglevel)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+    # Prevent propagation to root logger
+    logger.propagate = False
 
     return logger
 
@@ -160,7 +188,7 @@ def generate_text_with_claude(text_prompt):
 
 
 def generate_text_with_chatgpt(text_prompt):
-    if cfg.demo:
+    if cfg.demo != "False":
         print("Demo-Mode is ON")
         log.warning("This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this")
         return "This is a Demo only. Switch off the Demo Flag in config.ini to get rid of this"
@@ -198,7 +226,7 @@ def check_text_with_chatgpt(text):
 
 
 def generate_image(text):
-    if cfg.demo:
+    if cfg.demo != False:
         log.warning("Demo-Mode is ON")
         return "https://picsum.photos/200/300"
 

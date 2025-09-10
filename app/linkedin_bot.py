@@ -1,6 +1,6 @@
 import os
 import configparser
-
+import time
 from pathlib import Path
 
 import requests
@@ -8,6 +8,8 @@ from datetime import datetime
 import json
 import sys
 from bs4 import BeautifulSoup
+import unittest
+from unittest import mock
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 
@@ -19,10 +21,12 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 log = utils.get_log(os.path.basename(__file__))
 
+post_lock = False
 
 
 
 def post_to_linkedin(text, image, origin=None):
+    log.debug(f"Entering: post_to_linkedin(<TEXT>, {image}, {origin} )")
     ## origin: personal post or company post -> Setting the author
     ## company post is the default
 
@@ -39,15 +43,13 @@ def post_to_linkedin(text, image, origin=None):
         person_id = purn.rsplit(":", 1)[-1]
         author = f"urn:li:person:{person_id}"
 
-    print(f"Post as {origin}", author)
     log.info(f"Post as {origin} - {author}")
 
     ## prepare image for linkedin
     asset_urn, upload_url = register_image_upload(author)
     
     ## upload to linkedin
-    print(f"Image {image} upload as asset {asset_urn}")
-    log.info(f"Image {image} upload as asset {asset_urn}")
+    log.info(f"uploading Image {image} as asset {asset_urn}")
     upload_image_bytes(upload_url, image)
 
     resp, link = post_linkedin_api(text, asset_urn, author)
@@ -58,7 +60,7 @@ def post_to_linkedin(text, image, origin=None):
 
 
 def register_image_upload(owner):
-    log.debug("Enter: register_image_upload")
+    log.debug(f"Entering: register_image_upload( {owner} )")
     asset_api = "https://api.linkedin.com/v2/assets?action=registerUpload"
     headers = {"Authorization": f"Bearer {cfg.linkedin_token}", "X-Restli-Protocol-Version": "2.0.0"}
     payload = {
@@ -89,39 +91,52 @@ def register_image_upload(owner):
 def get_image_path(file):
     path, file = os.path.split(file)
     file_path = f"{os.getcwd()}/content/images/{file}"
-    print("Imagefile: ", file_path)
+    log.debug("Imagefile: {file_path}")
     return file_path
 
 
 
 
 def upload_image_bytes(upload_url, image_path):
+    log.debug(f"Entering: upload_image_bytes( {upload_url}, {image_path} )")
     file_path = get_image_path(image_path)
 
 
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}")
         log.error(f"File not found: {file_path}")
+        raise FileNotFoundError(f"File not found: {file_path}")
         exit()
 
     with open(file_path, 'rb') as f:
         headers = {
             "Authorization": f"Bearer {cfg.linkedin_token}"
         }
-        response = requests.put(upload_url, headers=headers, data=f)
-
+        if cfg.demo == False:
+            response = requests.put(upload_url, headers=headers, data=f)
+        else:
+            log.warning(f"Demo Mode ist ON - otherwise an image would be uploaded to LI (Faking response now)")
+            log.debug(f"\nCalling LinkedIn API : requests.put({upload_url}, {headers}, {f})\n\n")
+            response = Fake_response(status_code="220")
+            
         # Check the response
-        print(f"Image {file_path} uploaded to:{upload_url}   - with code: {response.status_code}")
         log.info(f"Image {file_path} uploaded to:{upload_url}   - with code: {response.status_code}")
         log.debug(response.text)
 
 
 
 
+## create a Fake Object to return Fake responses from API
+class Fake_response:
+    def __init__(self, status=None, status_code=None, text=None):
+        self.status = status
+        self.status_code = status_code
+        jText = {"text": text, "id": "Fake123"}
+        self.text = json.dumps(jText)
+
+
 
 # --- LinkedIn Posting ---
 def post_linkedin_api(text, asset_urn, author):
-    print("Poste Inhalt auf linkedIn!")
     log.info("Start post to linkedin")
     """Post in LinkedIn hochladen"""
     api_url = "https://api.linkedin.com/v2/ugcPosts"
@@ -152,19 +167,24 @@ def post_linkedin_api(text, asset_urn, author):
             "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
         }
     }
-    #print(payload)
-    r = requests.post(url=api_url, headers=headers, json=payload)
-    print("LinkedIn Response:", r.status_code, r.text)
+    
+    if cfg.demo == "False":
+        r = requests.post(url=api_url, headers=headers, json=payload)
+    else:
+        log.warning(f"Demo Mode ist ON - otherwise the posting would be placed at LI now (Faking response now)")
+        r = Fake_response(status_code = 221, text = "Fake response from LinkedIn")
+        link = "https://www.linkedin.com"
+
+    log.debug(f"Sending Post to LI now by requests.post(url={api_url}, headers=<headers>, json=<payload>)")
     log.debug(f"LinkedIn Response: {r.status_code} - {r.text}")
-    if r.status_code <= 300:
+
+    if r.status_code <= 220:
         data = json.loads(r.text)
         urn = data["id"]
         id = urn.split(":")[-1]
         company_urn = get_company_urn()
         #link = f"https://www.linkedin.com/feed/update/urn:li:activity:{id}"
         link = f"https://www.linkedin.com/company/{company_urn}/admin/dashboard/"
-        #print(f"Link zum neuen Post: \n{link}")
-        print("Posting done - find it on your linkedin page")
         log.info("post send to linkedin")
     
     return r.status_code, link
@@ -173,20 +193,19 @@ def post_linkedin_api(text, asset_urn, author):
 
 
 def web_post_existing_html(file):
-    print(f"Web interaction: posting now file {file}")
     log.info(f"Web interaction: posting now file {file}")
     try:
         resp, link = post_existing_html(file)
         return resp, link
     except Exception as e:
-        print("Error during posting of existing html file: ", e)
-        log.error("Error during posting of existing html file: ", e)
+        log.error("Error during posting of existing html file: {e}")
         return False, None
 
 
 
 
 def get_posting_data(file_path):
+    
     """ 
     read the file and returns all information as one dict
     Expects a full qualified path to the file
@@ -260,6 +279,16 @@ def get_posting_data(file_path):
 
 # --- Einen vorhandenen HTML-Post posten ---
 def post_existing_html(file_path):
+    log.debug(f"Entering: post_existing_html( {file_path} )")
+
+    global post_lock
+    if post_lock == True:
+        log.debug("post existing html in progress. wait a second...")
+        time.sleep(2)
+        post_existing_html(file_path)
+
+    post_lock = True
+
     data = get_posting_data(file_path)
 
     origin = data["origin"]
@@ -268,22 +297,18 @@ def post_existing_html(file_path):
     img_url = data["image"]
 
     if confirmed != "Yes":
-        print("This post is not confirmed as of now! \nCannot post before.")
         log.warning(f"This post is not confirmed as of now! Cannot post before - {file_path}")
+        post_lock = False
         return 500, None
     else:
-        print("Origin: ",origin)
+        log.debug(f"Calling post_to_linkedin(<TEXT>, {img_url}, {origin})")
         resp, link = post_to_linkedin(text, img_url, origin)
         print ("Response from post_existing_html: ", resp)
-        #print (f"link to the new post: {link}")
 
         platform = "linkedin"
         timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
         add_post_log(file_path, platform, timestamp)
-
-        #utils.move_to_used(file_path)
-        #utils.move_to_used(img_url)
-
+        post_lock = False
         return resp, link
 
 
@@ -296,17 +321,54 @@ def add_post_log(file_path, platform, timestamp):
     add_post_log(file_path, platform, timestamp)
     Falls das <section class="posting-meta"> nicht existiert, wird es erzeugt.
     """
-
+    log.debug(f"Adding post-log to {file_path}")
     if not os.path.exists(file_path):
+        log.error(f"File {file_path} does not exist")
         raise FileNotFoundError(f"File not found: {file_path}")
-
-    from bs4 import BeautifulSoup
 
     with open(file_path, "r", encoding="utf-8") as f:
         html = f.read()
 
     soup = BeautifulSoup(html, "html.parser")
+    soup, span = add_post_log_span(soup, platform, timestamp)
 
+
+    '''    # Falls meta-Section fehlt → neu anlegen
+    meta_section = soup.find("section", {"class": "posting-meta"})
+    if not meta_section:
+        meta_section = soup.new_tag("section", attrs={"class": "posting-meta", "style": "display:none;"})
+        soup.body.append(meta_section)
+
+    # Neuen Log-Eintrag erstellen
+    post_log = soup.new_tag("div", attrs={"class": "post-log"})
+
+    span_platform = soup.new_tag("span", attrs={"class": "platform"})
+    span_platform.string = platform
+    post_log.append(span_platform)
+
+    span_timestamp = soup.new_tag("span", attrs={"class": "timestamp"})
+    span_timestamp.string = timestamp
+    post_log.append(span_timestamp)
+
+    meta_section.append(post_log)
+'''
+    
+    log.info(f"new post-log in {file_path}")
+    # Datei zurückschreiben
+    with open(file_path, "w", encoding="utf-8") as f:
+        log.debug(f"writing to file {f}")
+        f.write(str(soup))
+
+
+
+def add_post_log_span(soup: BeautifulSoup, platform=None, timestamp=None):
+    if not platform:
+        platform = "linkedin"
+
+    if not timestamp:
+        timestamp = datetime.now().strftime("%d.%m.%Y %H:%M")
+        
+    #soup = BeautifulSoup(html, "html.parser")
     # Falls meta-Section fehlt → neu anlegen
     meta_section = soup.find("section", {"class": "posting-meta"})
     if not meta_section:
@@ -326,12 +388,8 @@ def add_post_log(file_path, platform, timestamp):
 
     meta_section.append(post_log)
 
-    # Datei zurückschreiben
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(str(soup))
-
-
-
+    return soup, meta_section
+    
 
 
 
@@ -342,10 +400,10 @@ def get_person_urn():
     if response.status_code == 200:
         data = response.json()
         person_urn = data.get("id")
-        #print("LinkedIn Person URN:", person_urn)
+        log.debug(f"LinkedIn Person URN: {person_urn}")
         return f"urn:li:person:{person_urn}"
     else:
-        print("Fehler:", response.status_code, response.text)
+        log.error(f"Fehler:  {response.status_code} -- {response.text}")
         return None
     
 
@@ -362,9 +420,9 @@ def get_company_urn():
         data = response.json()
         #urn = data.get("organizationalTarget")
         urn = data['elements'][0]['organizationalTarget']
-        #print("LinkedIn Company URN:", urn)
+        log.debug(f"LinkedIn Company URN: {urn}")
         return f"{urn}"
     else:
-        print("Fehler:", response.status_code, response.text)
+        log.error(f"Fehler:  {response.status_code} -- {response.text}")
         return None
     

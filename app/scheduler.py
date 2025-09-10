@@ -10,6 +10,10 @@ sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 
 import app.linkedin_bot as bot
 import app.config as cfg
+import app.utils as utils
+
+# get logger
+log = utils.get_log(os.path.basename(__file__))
 
 # Verzeichnis mit den vorbereiteten Postings
 SCHEDULE_DIR = cfg.output_dir
@@ -198,6 +202,7 @@ def scheduler(interval: int = 30):
     while True:
         now = datetime.now()
         now_min_str = now.strftime("%Y-%m-%dT%H:%M")  # for last-run compare
+        log.debug(f"Scheduler is checking Files in {SCHEDULE_DIR}")
 
         for filename in os.listdir(SCHEDULE_DIR):
             if not filename.endswith(".html"):
@@ -220,6 +225,7 @@ def scheduler(interval: int = 30):
 
                     # skip if already run in this minute
                     if last_run and last_run.startswith(now_min_str):
+                        log.debug("last_run hit - this has already been performed")
                         continue
 
                     # parse datetime if present
@@ -242,14 +248,20 @@ def scheduler(interval: int = 30):
                                 should_run = True
                         except Exception as e:
                             print(f"[WARN] repeat parse error for {filename}: {e}")
+                            log.warning(f"[WARN] repeat parse error for {filename}: {e}")
                             should_run = False
 
                     if should_run:
-                        print(f"[SCHEDULER] Trigger: {filename} (dt={dt_attr}, repeat={repeat_attr}) at {now}")
+                        message = (f"[SCHEDULER] Trigger: {filename} (dt={dt_attr}, repeat={repeat_attr}) at {now}")
+                        print(message)
+                        log.info(message)
                         try:
                             # call your existing function that posts a saved HTML
+                            log.info(f"Calling bot.post_existing_html")
                             bot.post_existing_html(f"{SCHEDULE_DIR}/{filename}")
+                            log.info(f"Posting finally send to LI: ({SCHEDULE_DIR}/{filename})")
                         except Exception as e:
+                            log.error(f"[ERROR] Fehler beim Senden von {SCHEDULE_DIR}/{filename}: {e}")
                             print(f"[ERROR] Fehler beim Senden von {SCHEDULE_DIR}/{filename}: {e}")
                         else:
                             # after successful posting:
@@ -264,10 +276,13 @@ def scheduler(interval: int = 30):
 
                 # falls wir modifiziert haben, zurückschreiben
                 if changed:
+                    # Add Last run to File
+                    soup, span = bot.add_post_log_span(soup)
                     with open(file_path, "w", encoding="utf-8") as f:
                         f.write(str(soup))
 
             except Exception as e:
+                log.error(f"[ERROR] Fehler beim Verarbeiten von {filename}: {e}")
                 print(f"[ERROR] Fehler beim Verarbeiten von {filename}: {e}")
 
         # sleep

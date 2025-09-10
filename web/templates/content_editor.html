@@ -459,10 +459,13 @@
                 
                 <div class="button-group">
                     <button type="button" class="btn btn-preview" onclick="updatePreview()">
-                        🔄 Vorschau aktualisieren
+                        🔄 refresh Preview
                     </button>
                     <button type="button" class="btn btn-save" onclick="saveFile()">
-                        💾 Datei speichern
+                        💾 update
+                    </button>
+                    <button type="button" class="btn btn-save_as_new" onclick="saveAsNew()">
+                        💾 save as new
                     </button>
                 </div>
             </div>
@@ -596,7 +599,7 @@
                     let input;
                     if (value && value.length > 100) {
                         input = document.createElement('textarea');
-                        input.rows = 4;
+                        input.rows = 20;
                     } else {
                         input = document.createElement('input');
                         input.type = 'text';
@@ -793,6 +796,44 @@
                 const result = await response.json();
                 
                 if (result.success) {
+                    // refreshing the preview
+                    updatePreview()
+
+                    successMessage.style.display = 'block';
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert('Fehler beim Speichern: ' + result.error);
+                }
+            } catch (error) {
+                alert('Fehler beim Speichern: ' + error.message);
+            }
+        }
+
+        // als NEUE Datei speichern
+        async function saveAsNew() {
+            const successMessage = document.getElementById('successMessage');
+            
+            try {
+                const response = await fetch('/api/save_as_new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        file: currentFilePath,
+                        elements: formData,
+                        savePath: '/content/new'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // refreshing the preview
+                    updatePreview()
+                    
                     successMessage.style.display = 'block';
                     setTimeout(() => {
                         successMessage.style.display = 'none';

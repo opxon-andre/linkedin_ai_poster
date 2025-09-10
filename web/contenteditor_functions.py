@@ -11,13 +11,13 @@ from pathlib import Path
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 
-from app.utils import extract_post_elements, render_linkedin_preview, save_post_as_html
+from app.utils import extract_post_elements, render_linkedin_preview, save_post_as_html, get_log
 from app.linkedin_bot import get_posting_data
 
 CONTENT_DIR = Path(f"{os.getcwd()}/content/new")
 CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
 
-
+log = get_log(os.path.basename(__file__))
 
 editable_elements = ['text', 'image']
 #editable_elements = ['confirmed', 'origin', 'text', 'image']
@@ -174,8 +174,10 @@ def api_preview():
 
 
 
-
-def api_save():
+# Save the File from request Data
+# update = False writes a new File (Default)
+# update = True updates the existing File
+def api_save(update=False):
     """
     API-Endpunkt zum Speichern der geänderten HTML-Datei
     """
@@ -213,15 +215,19 @@ def api_save():
                 'error': 'Originaldatei nicht gefunden'
             }), 404
         
+
         # Generiere neuen Dateinamen
-        
         original_filename = file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         name, ext = os.path.splitext(original_filename)
-        if not name.startswith("post"):
-            new_filename = f"post_{timestamp}.html"
+        if update:
+            new_filename = original_filename
         else:
-            new_filename = f"{name}_edited_{timestamp}{ext}"
+            if not name.startswith("post"):
+                new_filename = f"post_{timestamp}.html"
+            else:
+                new_filename = f"{name}_edited_{timestamp}{ext}"
+            
         final_save_path = os.path.join(CONTENT_DIR, new_filename)
 
         
