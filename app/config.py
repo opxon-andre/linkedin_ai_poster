@@ -4,10 +4,6 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
-from app.utils import get_log
-
-log = get_log()
 
 CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
 if not os.path.exists(CONFIG_FILE):
@@ -51,7 +47,7 @@ try:
     logpath = f"{os.getcwd()}{config["LOGGING"]["logpath"].strip('"').strip("'")}"
 
 except Exception as e:
-    log.error(f"failed reading config File {CONFIG_FILE} ")
+    print(f"failed reading config File {CONFIG_FILE} ")
 
 
 
@@ -65,7 +61,7 @@ try:
     image_prompt =      prompts["PROMPTS"]["image_prompt"].strip('"').strip("'")
 
 except Exception as e:
-    log.error(f"failed reading config File {PROMPS_FILE} ")
+    print(f"failed reading config File {PROMPS_FILE} ")
 
 
 
