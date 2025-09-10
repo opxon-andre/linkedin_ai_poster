@@ -91,7 +91,7 @@ def get_dry_run():
     if cfg.dry_run is False:
         return False
     else:
-        log.warning("Dry Run enabled. Saving posts locally only. No automated posting.")
+        log.warning(f"Dry Run set {cfg.dry_run}. Saving posts locally only. No automated posting.")
         return True
     
 

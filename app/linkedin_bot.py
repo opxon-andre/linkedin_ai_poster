@@ -108,10 +108,10 @@ def upload_image_bytes(upload_url, image_path):
         headers = {
             "Authorization": f"Bearer {cfg.linkedin_token}"
         }
-        if cfg.demo == "False":
+        if not cfg.demo:
             response = requests.put(upload_url, headers=headers, data=f)
         else:
-            log.warning(f"Demo Mode ist ON - otherwise an image would be uploaded to LI (Faking response now)")
+            log.warning(f"Demo Mode ist {cfg.demo}- otherwise an image would be uploaded to LI (Faking response now)")
             log.debug(f"\nCalling LinkedIn API : requests.put({upload_url}, {headers}, {f})\n\n")
             response = Fake_response(status_code="220")
             
@@ -165,10 +165,10 @@ def post_linkedin_api(text, asset_urn, author):
         }
     }
     
-    if cfg.demo == "False":
+    if not cfg.demo:
         r = requests.post(url=api_url, headers=headers, json=payload)
     else:
-        log.warning(f"Demo Mode ist ON - otherwise the posting would be placed at LI now (Faking response now)")
+        log.warning(f"Demo Mode is {cfg.demo} - otherwise the posting would be placed at LI now (Faking response now)")
         r = Fake_response(status_code = 221, text = "Fake response from LinkedIn")
         link = "https://www.linkedin.com"
 

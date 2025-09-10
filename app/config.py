@@ -36,7 +36,12 @@ try:
     timezone = ZoneInfo(config["SCHEDULER"]["timezone"].strip('"').strip("'"))
 
     dry_run =           config["OPTIONS"]["dry_run"].strip('"').strip("'")
-    demo =              config["OPTIONS"]["demo"]
+    #dry_run = eval(s_dry_run.lower())
+    s_demo =              config["OPTIONS"]["demo"].strip('"').strip("'").lower()
+    demo = False
+    if s_demo == "true":
+        demo = True
+    #demo = eval(s_demo.lower())
 
     system_prompt =     config["PROMPTS"]["system_prompt"].strip('"').strip("'")
     check_prompt =      config["PROMPTS"]["check_prompt"].strip('"').strip("'")
