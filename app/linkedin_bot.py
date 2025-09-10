@@ -1,5 +1,4 @@
 import os
-import configparser
 import time
 from pathlib import Path
 
@@ -8,8 +7,6 @@ from datetime import datetime
 import json
 import sys
 from bs4 import BeautifulSoup
-import unittest
-from unittest import mock
 
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 
