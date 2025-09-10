@@ -195,7 +195,7 @@ def web_post_existing_html(file):
         resp, link = post_existing_html(file)
         return resp, link
     except Exception as e:
-        log.error("Error during posting of existing html file: {e}")
+        log.error(f"Error during posting of existing html file: {e}")
         return False, None
 
 
