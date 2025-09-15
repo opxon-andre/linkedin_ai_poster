@@ -36,7 +36,7 @@ timezone = Europe/Berlin
 # A file with one prompt in each line. The Program decide random which to choose
 # This is optional to the single prompt file. In best case, define your favorite prompt in the single file, and fill up the text_file with everything you learn over time.
 # The configured file need to exist in the config directory. (/config/<text_file)
-text_file = textprompts
+prompts_file = textprompts
 system_prompt = "Du bist ein erfahrener Marketing- und LinkedIn-Texter."
 check_prompt = "Prüfe, ob der Text für LinkedIn geeignet ist. Antworte nur mit 'OK' oder 'NICHT OK'."
 

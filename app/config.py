@@ -15,13 +15,15 @@ try:
     config.read(CONFIG_FILE)
 
     openai_token =      config["API"]["openai_token"].strip('"').strip("'")
-    openai_model =      config["API"]["openai_model"].strip('"').strip("'")
+    #openai_model =      config["API"]["openai_model"].strip('"').strip("'")
 
     claude_api_key =    config["API"]["claude_token"].strip('"').strip("'")
     claude_model =      config["API"]["claude_model"].strip('"').strip("'")
 
     text_ai =           config["API"]["text_ai"].strip('"').strip("'")
     image_ai =          config["API"]["image_ai"].strip('"').strip("'")
+    openai_text_model = config["API"]["openai_text_model"].strip('"').strip("'")
+    openai_image_model = config["API"]["openai_image_model"].strip('"').strip("'")
 
     linkedin_token =    config["API"]["linkedin_token"].strip('"').strip("'")
 
@@ -45,7 +47,10 @@ try:
 
     system_prompt =     config["PROMPTS"]["system_prompt"].strip('"').strip("'")
     check_prompt =      config["PROMPTS"]["check_prompt"].strip('"').strip("'")
-    text_prompt_file =  config["PROMPTS"]["text_file"].strip('"').strip("'")
+    improve_prompt =      config["PROMPTS"]["improve_prompt"].strip('"').strip("'")
+    image_prompt =      config["PROMPTS"]["image_prompt"].strip('"').strip("'")
+    text_prompt = config["PROMPTS"]["default_text_prompt"].strip('"').strip("'")
+    text_prompt_file =  config["PROMPTS"]["prompts_file"].strip('"').strip("'")
     promptpath = Path(f"{os.getcwd()}/config/{text_prompt_file}")
 
     loglevel =          config["LOGGING"]["loglevel"].strip('"').strip("'")
@@ -53,22 +58,6 @@ try:
 
 except Exception as e:
     print(f"failed reading config File {CONFIG_FILE} ")
-
-
-
-try:
-    # --- Prompts laden ---
-    PROMPS_FILE = f"{os.getcwd()}/config/prompts"
-    prompts = configparser.ConfigParser()
-    prompts.read(PROMPS_FILE)
-
-    text_prompt =       prompts["PROMPTS"]["text_prompt"].strip('"').strip("'")
-    image_prompt =      prompts["PROMPTS"]["image_prompt"].strip('"').strip("'")
-
-except Exception as e:
-    print(f"failed reading config File {PROMPS_FILE} ")
-
-
 
 
 

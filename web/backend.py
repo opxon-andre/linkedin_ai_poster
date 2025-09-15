@@ -411,12 +411,6 @@ def a_create_content(prompt):
     generation_status["running"] = True
     generation_status["finished"] = False
 
-    # hier kommt dein eigentlicher Code hin:
-    #time.sleep(120)  # simuliert deine 2 Minuten Generierung
-    #filename = "new_post.html"
-    #with open(os.path.join("content", "new", filename), "w", encoding="utf-8") as f:
-    #    f.write("<html><body><h1>Neues Posting</h1></body></html>")
-
     ## calling function in utils
     ret, file = create_and_save_post(prompt)
 

@@ -78,11 +78,12 @@ def create_and_save_post(dry_run=True):
 
 
 def main(command=None):
-    if command:
-        parser = argparse.ArgumentParser()
-        parser.add_argument("command")
-        args = parser.parse_args()
-        command = args.command
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command")
+    args = parser.parse_args()
+
+    if args.command: command = args.command       
+    else: command = None
 
     match command:
         case "post_existing":
