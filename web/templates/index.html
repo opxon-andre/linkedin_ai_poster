@@ -163,10 +163,27 @@
     min-width: 250px;
   }
 
+.prompt_show {
+    padding-left: 2em;
+    padding-right: 2em;
+    height: 400px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    margin-bottom: 1em;
+}
 
+.settings img{
+  size: 40px;
+}
+  
   </style>
 </head>
 <body>
+  <div class="menu">
+    <div class="settings">
+      <img src="/content/static/icons/settings.png" onclick="window.open('/config', 'settings')">
+    </div>
+  </div>
   <h1 style="text-align:center;">Prepared Postings</h1>
   <div class="grid">
     {% for template in templates %}
@@ -197,7 +214,7 @@
             Open Preview
           </button>
           <button class="btn btn-edit"
-                  onclick="window.open('/contenteditor?file={{ post.filename }}', '_blank')">
+                onclick="window.open('/contenteditor?file={{ post.filename }}', '_blank')">
             Edit
           </button>
           <button class="btn btn-delete"
@@ -264,13 +281,24 @@
 
   <h1 style="text-align:center;">Generate new Postings with AI</h1>
   <div class="grid">
+      <div class="card">
+        <div class="prompt_show">
+          <p>Create a new Prompt here</p>
+        </div>
+        <div class="card-controls">
+
+          <button class="btn btn-promptEdit" data-prompt="{{prompt}}">
+            ✏️ Create
+          </button>
+        </div>
+      </div>
     {% for prompt in prompts %}
       <div class="card">
         <div class="prompt_show">
           <p>{{prompt}}</p>
         </div>
         <div class="card-controls">
-          <button class="generateBtn" data-prompt="{{ prompt }}">
+          <button class="btn generateBtn" data-prompt="{{ prompt }}">
             Generate New
           </button>
           <button class="btn btn-promptEdit" data-prompt="{{prompt}}">
