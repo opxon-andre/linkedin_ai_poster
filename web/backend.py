@@ -8,7 +8,7 @@ import time
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 import app.config as cfg
 from app.linkedin_bot import web_post_existing_html
-from app.utils import get_schedules_from_post, generate_text, generate_image, save_post_as_html, edit_prompt, create_and_save_post, extract_post_elements
+from app.utils import get_schedules_from_post, generate_text, generate_image, save_post_as_html, create_and_save_post, get_log
 
 import web.contenteditor_functions as ccf
 
@@ -17,17 +17,13 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+log = get_log(os.path.basename(__file__))
+
 
 
 CONTENT_DIR = Path(f"{os.getcwd()}/content/new")
 CONFIG_FILE = f"{os.getcwd()}/config/config.ini"
-'''
-config = configparser.ConfigParser()
-config.read(CONFIG_FILE)
 
-promptfile = config["PROMPTS"]["text_file"]
-promptpath = Path(f"{os.getcwd()}/config/{promptfile}")
-'''
 
 webapp = Flask(__name__, static_folder="../content")
 
@@ -47,7 +43,7 @@ def load_templates():
     dir = Path(f"{os.getcwd()}/content/templates")
     if not os.path.isfile(Path(f"{os.getcwd()}/content/new/template.html")):
         file = generate_new_template()
-        print(f"New template generated: {file}")
+        log.info(f"New template generated: {file}")
         os.rename(file, f"{os.getcwd()}/content/new/template.html")
     return load_posts(ending="template.html")
 
@@ -58,7 +54,7 @@ def load_posts(read_dir=None, ending="post_*.html"):
     if not read_dir:
         read_dir = CONTENT_DIR
 
-    print(f"read_dir: {read_dir}")
+    log.debug(f"read_dir: {read_dir}")
     posts = []
     for file in read_dir.glob(ending):
         with open(file, "r", encoding="utf-8") as f:
@@ -107,10 +103,9 @@ def load_posts(read_dir=None, ending="post_*.html"):
 @webapp.route("/update_flag", methods=["POST"])
 def update_flag():
     data = request.json
-    #print("Data: ",data["confirmed"])
     filename = data["filename"]
     new_flag = data["confirmed"] if data["confirmed"] else "No"
-    #print(f"New confirmation: ", new_flag)
+    log.debug(f"New confirmation: {new_flag} on {filename}")
 
     file_path = CONTENT_DIR / filename
     with open(file_path, "r", encoding="utf-8") as f:
@@ -131,10 +126,9 @@ def update_flag():
 @webapp.route("/change_origin", methods=["POST"])
 def change_origin():
     data = request.json
-    #print("Data: ",data["origin"])
     filename = data["filename"]
     new_flag = data["origin"] if data["origin"] else "Company"
-    #print(f"New origin: ", new_flag)
+    log.debug(f"New origin: {new_flag} on file {filename}")
 
     file_path = CONTENT_DIR / filename
     with open(file_path, "r", encoding="utf-8") as f:
@@ -340,15 +334,15 @@ def generate_new():
 
     text = generate_text(prompt)
     if not text:
-        print("Text generation failed - aborting!")
+        log.error("Text generation failed - aborting!")
         exit()
     else:
-        print("Text generation successful!\n")
+        log.info("Text generation successful!\n")
         
     image_url = generate_image(text)
     html_file = save_post_as_html(text, image_url)
     fqdp = Path(html_file)
-    print(f"Post als HTML gespeichert: {fqdp}")
+    log.info(f"Post als HTML gespeichert: {fqdp}")
     return jsonify({"status": "success"})
 
 
@@ -357,7 +351,7 @@ def generate_new():
 @webapp.route("/edit_prompt")
 def prompts_page():
     old_text = request.args.get("prompt", "")
-    print("Übergabe an promptedit:\n", old_text)
+    #print("Übergabe an promptedit:\n", old_text)
     return render_template("prompts.html", old_text=old_text)
 
 
@@ -387,7 +381,7 @@ def update_prompt_in_file(old_text, new_text):
 
         return True
     except Exception as e:
-        print("Fehler beim Speichern:", e)
+        log.error("Fehler beim Speichern: {e}")
         return False
 
 
@@ -498,18 +492,6 @@ def config_save():
 
 
 
-#####################################################################################
-### Custom content creator
-
-@webapp.route("/new_custom", methods=["POST"])
-def new_custom_content():
-    filename = request.form.get("filename")
-    print(f"Filename: {request.form}")
-    filepath = os.path.join(CONTENT_DIR, filename)
-    return render_template("custom.html", filepath=filepath)
-
-
-
 def generate_new_template():
     text = "Create something custom"
     image_url = "https://picsum.photos/200/300"
@@ -517,30 +499,6 @@ def generate_new_template():
     return html_file
 
 
-
-@webapp.route("/custom_creator")
-def custom_creator():
-    return render_template("custom_creator.html")
-
-@webapp.route("/save_custom_post", methods=["POST"])
-def save_custom_post():
-    data = request.get_json()
-    html = data.get("html", "")
-
-    if not html.strip():
-        return jsonify({"success": False, "error": "Empty HTML"})
-
-    # Dateiname mit Timestamp
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"post_{ts}.html"
-    file_path = os.path.join(CONTENT_DIR, filename)
-
-    try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(html)
-        return jsonify({"success": True, "filename": filename})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
     
 
 
@@ -605,11 +563,6 @@ def api_upload_image():
 def serve_postings(filename):
     return send_from_directory("../content/new", filename)
 
-
-#@webapp.route('/content/images/<path:filename>')
-#def serve_images(filename):
-#    print(f"serve Image TWO: {filename}")
-#    return send_from_directory("../content/images", filename)
 
 
 @webapp.route('/content/static/icons/<path:filename>')
