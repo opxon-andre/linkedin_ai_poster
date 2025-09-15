@@ -46,7 +46,7 @@ EXPOSE 4561
 ### possible entrypoints:
     ## generate -> only generates new content
     ## automode -> takes the most recent content from the content/new directory, posts it to LI, and create a new post for the stack.
-ENTRYPOINT ["python", "app/main.py"]
+ENTRYPOINT ["python", "main.py"]
 
 
 
