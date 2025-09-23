@@ -172,8 +172,8 @@
     margin-bottom: 1em;
 }
 
-.settings img{
-  size: 40px;
+.icon{
+  height: 40px;
 }
   
   </style>
@@ -181,7 +181,7 @@
 <body>
   <div class="menu">
     <div class="settings">
-      <img src="/content/static/icons/settings.png" onclick="window.open('/config', 'settings')">
+      <img src="/content/static/icons/settings.png" class="icon" onclick="window.open('/config', 'settings')">
     </div>
   </div>
   <h1 style="text-align:center;">Prepared Postings</h1>
@@ -219,8 +219,8 @@
           </button>
           <button class="btn btn-delete"
                   data-filename="{{ post.filename }}"
-                  onclick="deletePost(this)">
-            Delete
+                  onclick="archivePost(this)">
+            Archive
           </button>
         </div>
 
@@ -348,7 +348,7 @@
   <script>
     async function postNow(button) {
       const filename = button.dataset.filename;
-      if (!confirm("Please confirm this post before posting it!")) return;
+      //if (!confirm("Please confirm this post before posting it!")) return; 
 
       const response = await fetch("/post_now", {
         method: "POST",
@@ -504,6 +504,23 @@
         }
       } else {
         alert("Fehler beim Aktualisieren");
+      }
+    }
+
+    async function archivePost(button) {
+      const filename = button.dataset.filename;
+      //if (!confirm("really delete this post?")) return;
+
+      const response = await fetch("/archive_post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename })
+      });
+
+      if (response.ok) {
+        button.closest(".card").remove();
+      } else {
+        alert("Fehler beim Archivieren");
       }
     }
 

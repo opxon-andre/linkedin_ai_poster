@@ -8,7 +8,7 @@ import time
 sys.path.append(os.path.join(os.path.dirname(sys.path[0])))
 import app.config as cfg
 from app.linkedin_bot import web_post_existing_html
-from app.utils import get_schedules_from_post, generate_text, generate_image, save_post_as_html, create_and_save_post, get_log
+from app.utils import get_schedules_from_post, generate_text, generate_image, save_post_as_html, create_and_save_post, get_log, move_to_archive
 
 import web.contenteditor_functions as ccf
 
@@ -165,6 +165,27 @@ def post_now():
         else:
             return jsonify(success=False), 300
 
+
+
+@webapp.route("/archive_post", methods=["POST"])
+def archive_post():
+    data = request.get_json()
+    filename = data.get("filename")
+
+    if not filename:
+        return jsonify({"error": "Filename missing"}), 400
+
+    file_path = os.path.join(CONTENT_DIR, filename)
+
+    if not os.path.exists(file_path):
+        return jsonify({"error": "File not found"}), 404
+
+    try:
+        move_to_archive(file_path)
+        return jsonify({"status": "success", "filename": filename})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500    
+    
 
 
 

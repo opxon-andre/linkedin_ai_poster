@@ -27,26 +27,7 @@ openai_client = OpenAI(api_key=cfg.openai_token)
 
 
 
-def get_log_BAK(name=None):
-    """
-    get a log handler
-    hand over the result of os.path.basename(__file__) as name
-    """
-    if not name:
-        name = os.path.basename(__file__)
 
-    loglevel = cfg.loglevel.strip('"').strip("'")
-
-    Path(cfg.logpath).mkdir(parents=True, exist_ok=True)
-    logger = logging.getLogger(name)
-    logger.setLevel(loglevel)
-    fh = logging.FileHandler(f"{cfg.logpath}linkedinbot.log")
-    fh.setLevel(loglevel)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    return logger
 
 
 def get_log(name: str = __name__, log_file: str = cfg.logpath) -> logging.Logger:
@@ -312,11 +293,28 @@ def save_post_as_html(text, image, file_path=None):
     return file_path
 
 
+
+
 def move_to_used(src):
     # move from new to used in ../content
     log.debug(f"move to used File: {src}")
     #os.rename(src, dest)
     return True
+
+
+
+
+def move_to_archive(src):
+    # move from new to used in ../content
+    log.debug(f"move File to archive: {src}")
+    file = os.path.basename(src)
+    dest = Path(f"{os.getcwd()}/content/archive/{file}")
+    os.rename(src, dest)
+    log.info(f"{file} moved to archive")
+    return True
+
+
+
 
 # Only for CLI Mode
 def list_existing_posts():
